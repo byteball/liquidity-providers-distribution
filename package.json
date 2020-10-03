@@ -1,0 +1,15 @@
+{
+	"name": "liquidity-providers-distribution",
+	"version": "1.0.0",
+	"description": "An Obyte bot to reward liquidity providers",
+	"main": "wcg.js",
+	"license": "MIT",
+	"dependencies": {
+		"ocore": "git+https://github.com/byteball/ocore.git",
+		"headless-obyte": "git+https://github.com/byteball/headless-obyte.git",
+		"aabot": "git+https://github.com/byteball/aabot.git"
+	},
+	"resolutions": {
+		"level-rocksdb": "^4.0.0"
+	}
+}
