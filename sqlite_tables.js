@@ -9,11 +9,13 @@ exports.create = async function(){
 		id INTEGER PRIMARY KEY AUTOINCREMENT, \n\
 		is_frozen TINYINT DEFAULT 0, \n\
 		is_completed TINYINT DEFAULT 0, \n\
-		snapshot_time NOT NULL DEFAULT CURRENT_TIMESTAMP \n\
+		snapshot_time NOT NULL DEFAULT CURRENT_TIMESTAMP, \n\
+		assets_total_value REAL DEFAULT 0, \n\
+		assets_total_weighted_value REAL DEFAULT 0, \n\
 		datetime TIMESTAMP NOT NULL \n\
 	);");
 
-	await db.query("INSERT OR IGNORE INTO distributions (id,date_time) VALUES (1,?)", [conf.first_distribution_datetime]);
+	await db.query("INSERT OR IGNORE INTO distributions (id,datetime) VALUES (1,?)", [conf.first_distribution_datetime]);
 	await db.query("CREATE TABLE IF NOT EXISTS rewards (\n\
 		id INTEGER PRIMARY KEY AUTOINCREMENT, \n\
 		distribution_id INTEGER, \n\
@@ -28,12 +30,14 @@ exports.create = async function(){
 	await db.query("CREATE TABLE IF NOT EXISTS per_asset_rewards (\n\
 		distribution_id INTEGER, \n\
 		reward_id INTEGER, \n\
-		asset  CHAR(44), \n\
-		assset_amount NOT NULL,\n\
-		reward_amount NOT NULL,\n\
+		asset CHAR(44), \n\
+		asset_amount INTEGER NOT NULL,\n\
+		asset_value REAL NOT NULL, \n\
+		asset_weighted_value REAL NOT NULL, \n\
+		reward_amount INTEGER NOT NULL,\n\
 		UNIQUE(reward_id, asset), \n\
 		FOREIGN KEY (distribution_id) REFERENCES distributions(id), \n\
-		FOREIGN KEY (reward_id) REFERENCES rewards(id), \n\
+		FOREIGN KEY (reward_id) REFERENCES rewards(id) \n\
 	);");
 
 }

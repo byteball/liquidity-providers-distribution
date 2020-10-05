@@ -10,47 +10,55 @@ describe('Check simple AA', function () {
 	before(async () => {
 		this.network = await Network.create()
 			.with.agent({ agent: path.join(__dirname, AA_PATH) })
+			.with.asset({ pool_asset_1: {} })
 			.with.wallet({ alice: 1e6 })
 			.with.wallet({ bob: 1e3 })
+			.with.explorer()
 			.run()
+
+			const { unit, error } = await this.network.deployer.sendMulti({
+				asset: this.network.asset.pool_asset_1,
+						asset_outputs:[{
+							address: await this.network.wallet.alice.getAddress(),
+							amount: 50e9
+						}],
+						asset_outputs:[{
+							address: await this.network.wallet.alice.getAddress(),
+							amount: 50e9
+						}],
+					
+				}
+			);
+			await this.network.witnessUntilStable(unit)
+
 	})
 
-	it('Send bytes and check balance', async () => {
-		const { unit } = await this.network.wallet.alice.sendBytes({
-			toAddress: await this.network.wallet.bob.getAddress(),
-			amount: 10000
-		})
-
-		expect(unit).to.be.validUnit
-		await this.network.witnessUntilStable(unit)
-
-		const bobBalance = await this.network.wallet.bob.getBalance()
-		expect(bobBalance.base.pending).to.be.equal(0)
-		expect(bobBalance.base.stable).to.be.equal(11000)
-
-		const aliceBalance = await this.network.wallet.alice.getBalance()
-		expect(aliceBalance.base.pending).to.be.equal(0)
-		expect(aliceBalance.base.stable).to.be.equal(989626)
-	}).timeout(60000)
 
 	it('Trigger AA', async () => {
-		const { unit, error } = await this.network.wallet.alice.triggerAaWithData({
-			toAddress: this.network.agent.agent,
-			amount: 10000,
-			data: {
-				a: 100,
-				b: 200
+		var { unit, error } = await this.network.wallet.alice.sendMulti({
+
+					asset: this.network.asset.pool_asset_1,
+					asset_outputs:[{
+						amount: 50000,
+						address: this.network.agent.agent,
+					}],
+					base_outputs:[{
+						amount:  10000,
+						address: this.network.agent.agent,
+					}]
 			}
-		})
+		);
 
 		expect(error).to.be.null
 		expect(unit).to.be.validUnit
+		var { response } = await this.network.getAaResponseToUnit(unit)
+		expect(response.bounced).to.be.false;
+		expect(response.response.info).to.be.equal("home team didn't win")
 
-		const { response } = await this.network.getAaResponseToUnitOnNode(this.network.wallet.alice, unit)
-		expect(response.response.responseVars.result).to.be.equal(300)
 	}).timeout(60000)
 
 	after(async () => {
+		await Utils.sleep(3600 * 1000)
 		await this.network.stop()
 	})
 })

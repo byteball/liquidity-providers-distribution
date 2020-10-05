@@ -5,9 +5,12 @@
 	"main": "wcg.js",
 	"license": "MIT",
 	"dependencies": {
-		"ocore": "git+https://github.com/byteball/ocore.git",
+		"aabot": "git+https://github.com/byteball/aabot.git",
+		"ejs": "^3.1.5",
+		"express": "^4.17.1",
 		"headless-obyte": "git+https://github.com/byteball/headless-obyte.git",
-		"aabot": "git+https://github.com/byteball/aabot.git"
+		"node-fetch": "^2.6.1",
+		"ocore": "git+https://github.com/byteball/ocore.git"
 	},
 	"resolutions": {
 		"level-rocksdb": "^4.0.0"

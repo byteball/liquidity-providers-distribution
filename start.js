@@ -3,6 +3,8 @@
 const eventBus = require('ocore/event_bus.js');
 const headlessWallet = require('headless-obyte');
 const conf = require('ocore/conf.js');
+const constants = require('ocore/constants.js');
+
 const db = require('ocore/db.js');
 const validationUtils = require("ocore/validation_utils.js");
 const mutex = require('ocore/mutex.js');
@@ -18,6 +20,9 @@ const valueByPoolsAssets = {};
 async function start(){
 	await sqlite_tables.create();
 	await discoverPoolAssets();
+	console.log("eligiblePools")
+	console.log(eligiblePools);
+	require('./webserver');
 	makeNextDistribution();
 	setInterval(makeNextDistribution, 60 * 1000)
 
@@ -26,21 +31,19 @@ async function start(){
 async function distributeIfReady(){
 
 
-	
+
 }
 
 async function makeNextDistribution(){
 
-	const unlock = await mutex.skipOrLock(['make']);
+	const unlock = await mutex.lockOrSkip(['make']);
 
 	const rows = await db.query("SELECT is_frozen, is_completed,id FROM distributions ORDER BY id DESC LIMIT 1");
 	if (rows[0].is_frozen && !rows[0].is_completed){
 		console.log("Skip building, distribution ongoing");
 		return unlock();
 	}
-	if (rows[0].is_completed) // the previous distribution is completed, let's create an id and a planned time for the next one
-		await db.query("INSERT INTO distributions (datetime) VALUES ((SELECT date(datetime, '+"+ conf.hoursBetweenDistributions + " hours')\n\
-		FROM distributions ORDER BY id DESC LIMIT 1)") // 
+
 
 	if (!await determinePoolAssetsValues()){
 		console.log("couldn't determine pools assets values");
@@ -48,47 +51,72 @@ async function makeNextDistribution(){
 	}
 
 	try {
-		var deposited_pools_assets = await dag.readAAStateVars(assets_keeper_aa, "amount_");
+		var deposited_pools_assets = await dag.readAAStateVars(conf.assets_keeper_aa, "amount_");
 	} catch(e){
-		console.log("couldn't read assets_keeper_aa vars");
+		console.log("couldn't read assets_keeper_aa vars " + e.message);
 		return unlock();
 	}
 
-	const distri_id = (await db.query("SELECT MAX(id) AS id FROM distribution"))[0].id;
+	if (rows[0].is_completed) // the previous distribution is completed, let's create an id and a planned time for the next one
+		await db.query("INSERT INTO distributions (datetime) VALUES ((SELECT date(datetime, '+"+ conf.hoursBetweenDistributions + " hours')\n\
+		FROM distributions ORDER BY id DESC LIMIT 1)") // 
+
+	const distri_id = (await db.query("SELECT MAX(id) AS id FROM distributions"))[0].id;
 
 	const poolsAssetsValuesByAddresses = {};
 	var total_value = 0;
+	var total_weighted_value = 0;
+	console.log(deposited_pools_assets);
 	for (var key in deposited_pools_assets){
 		const address = key.split("_")[2];
 		if (!validationUtils.isValidAddress(address))
 			throw Error("Invalid address: " + address);
-		const asset = key.split("_")[2];
-		if (!validationUtils.isValidUnit(asset))
+		const asset = key.split("_")[1];
+		if (!validationUtils.isValidBase64(asset, constants.HASH_LENGTH))
 			throw Error("Invalid asset: " + asset);
 		const amount = deposited_pools_assets[key];
-		if (!validationUtils.isPositiveNumber(amount))
+		if (!validationUtils.isPositiveInteger(amount))
 			throw Error("Invalid amount: " + asset);
-		if (!valueByPoolsAssets[asset])
-			throw Error("unknown value for asset: " + asset);
+		if (!valueByPoolsAssets[asset]) // if we didn't determine its value then it's not an eligible pool asset
+			continue;
 
 		if (!poolsAssetsValuesByAddresses[address])
 			poolsAssetsValuesByAddresses[address] = {};
-		const value = valueByPoolsAssets[asset] * amount;
-		poolsAssetsValuesByAddresses[address][asset] = {value, amount};
+		const value = valueByPoolsAssets[asset].value * amount;
+		const weighted_value = valueByPoolsAssets[asset].weighted_value * amount;
+
+		poolsAssetsValuesByAddresses[address][asset] = {value, weighted_value, amount};
 		total_value += value;
+		total_weighted_value+= weighted_value;
+	}
+
+	console.log("poolsAssetsValuesByAddresses")
+console.log(poolsAssetsValuesByAddresses)
+console.log(total_value)
+	if (total_value === 0){
+		console.log("nothing currently locked");
+		return unlock();
 	}
 
 	const conn = await db.takeConnectionFromPool();
 	await conn.query("BEGIN");
+	await conn.query("DELETE FROM per_asset_rewards WHERE distribution_id=?",[distri_id]);
+	await conn.query("DELETE FROM rewards WHERE distribution_id=?",[distri_id]);
+	await conn.query("UPDATE distributions SET assets_total_value=?,assets_total_weighted_value=? WHERE id=?",[total_value, total_weighted_value, distri_id]);
 
 	for (var address in poolsAssetsValuesByAddresses){
-		await conn.query("INSERT " + db.getIgnore() + " INTO rewards(distribution_id, payout_address) VALUES (?,?)",[distri_id, address]);
+		await conn.query("INSERT INTO rewards(distribution_id, payout_address) VALUES (?,?)",[distri_id, address]);
 		for (var asset in poolsAssetsValuesByAddresses[address]){
-			const share = poolsAssetsValuesByAddresses[address][asset].value / total_value;
-			const reward_amount = share * conf.distribution_amount;
-			await conn.query("INSERT " + db.getIgnore() + " INTO per_asset_rewards(distribution_id, reward_id, asset, asset_amount, reward_amount)\n\
-			VALUES (?,(SELECT MAX(id) FROM rewards),?,?,?)",[distri_id, asset, poolsAssetsValuesByAddresses[address][asset].amount, reward_amount]);
-			await conn.query("UPDATE rewards SET distribution_share=distribution_share+?,reward_amount+? WHERE id=(SELECT MAX(id) FROM rewards)",[share,reward_amount]);
+			const share = poolsAssetsValuesByAddresses[address][asset].weighted_value / total_weighted_value;
+			const reward_amount = Math.round(share * conf.distribution_amount);
+			console.log("reward_amount " + reward_amount)
+			const asset_amount = poolsAssetsValuesByAddresses[address][asset].amount;
+			const asset_value = poolsAssetsValuesByAddresses[address][asset].value;
+			const asset_weighted_value = poolsAssetsValuesByAddresses[address][asset].weighted_value;
+			await conn.query("INSERT INTO per_asset_rewards(distribution_id, reward_id, asset, asset_amount, reward_amount,asset_value,\n\
+			asset_weighted_value) VALUES (?,(SELECT MAX(id) FROM rewards),?,?,?,?,?)",[distri_id, asset, asset_amount, reward_amount, asset_value, asset_weighted_value]);
+			await conn.query("UPDATE rewards SET distribution_share=distribution_share+?,reward_amount=reward_amount+? \n\
+			WHERE id=(SELECT MAX(id) FROM rewards)",[share, reward_amount]);
 		}
 	}
 	await conn.query("UPDATE distributions SET is_frozen=1 WHERE datetime > date('now')");
@@ -110,7 +138,7 @@ async function discoverPoolAssets(){
 
 async function determinePoolAssetsValues(){
 	try {
-		var assets_data = fetch(conf.assets_summary_url).json();
+		var assets_data = await (await fetch(conf.assets_data_url)).json();
 	} catch(e) {
 		console.log("error when fetching " + e.message);
 		return false;
@@ -122,23 +150,52 @@ async function determinePoolAssetsValues(){
 			const pool_asset = eligiblePools[pool_address].pool_asset;
 
 			const balances = await dag.readBalance(pool_address); 
+
+
 			console.log(balances);
-			const total_pool_value = balances[asset0].stable * getAssetGbValue(asset0) + balances[asset1].stable * getAssetGbValue(asset1);//decimals missing
+			console.log(assets_data);
+			console.log(asset0);
+
+			console.log(getAssetGbValue(asset0));
+			console.log(asset1);
+
+			console.log(getAssetGbValue(asset1));
+
+			console.log(balances[asset1].stable);
+			console.log(balances[asset0].stable);
+
+			if (!balances[asset0] || !balances[asset0].stable || !balances[asset1] || !balances[asset1].stable)
+				continue;
+			const total_pool_value = balances[asset0].stable * getAssetGbValue(asset0) + balances[asset1].stable * getAssetGbValue(asset1);
+			
+			
+			
+			//decimals missing
 			const pool_asset_supply = await dag.readAAStateVar(pool_address, "supply");
-			valueByPoolsAssets[pool_asset] = (total_pool_value / pool_asset_supply) * (eligiblePools[pool_address].coeff / 100);
+			const asset_value = (total_pool_value / pool_asset_supply) 
+
+			valueByPoolsAssets[pool_asset] =  {
+				value: asset_value,
+				weighted_value: asset_value * (eligiblePools[pool_address].coeff / 100)
+			};
 		}
 	} catch(e) {
 		console.log("error " + e.message);
 		return false;
 	}
+	console.log("valueByPoolsAssets")
+	console.log(valueByPoolsAssets)
 	return true;
 
 	function getAssetGbValue(asset){
 		for (var symbol in assets_data){
 			if (assets_data[symbol].asset_id == asset)
-				return assets_data[symbol].last_gbyte_value;
+				return assets_data[symbol].last_gbyte_value / (10 ** assets_data[symbol].decimals);
 		}
 	}
 
 
 }
+
+
+process.on('unhandledRejection', up => { throw up });
