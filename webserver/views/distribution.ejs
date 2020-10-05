@@ -8,11 +8,27 @@
 </head>
 <body>
 <section class="section">
-	<div class="container">
-	<h1 class="title">
-		Liquidity providers distribution
-	</h1>
+		<h1 class="title">
+			Liquidity providers distribution
+		</h1>
+		<div class="columns">
+			<div class="column">
+				<button class="button is-large is-fullwidth is-primary">Next distribution</button>
+				<button class="button is-large is-fullwidth">Distribution 2</button>
+
+				<button class="button is-large is-fullwidth">Distribution 1</button>
+				<button class="button is-large is-fullwidth">Distribution 0</button>
+
+			</div>
+			<div class="column is-four-fifths">
+
 	<table class="table">
+		<section class="section">
+
+			<% if(!id){%>
+			Next distribution planned on: <%= distributionsRows[0].datetime %>
+			<%}%>
+		</section>
 		<thead>
 		  <tr>
 			<th>Address</th>
@@ -26,19 +42,31 @@
 		</thead>
 		<tbody>
 			<% for(var k in rewardsRows) {
-				const details = rewardsRows[k].reward_details.split('@');
+				const details = rewardsRows[k].reward_details.split(',');
+				 for(var j in details) {
+					const details_columns = details[j].split("@");
 			%>
 			<tr>
-				<td rowspan="<%=details%>">rewardsRows[k].payout_address</td>
-				<td>rewardsRows[k].reward_amount</td>
-				<td>rewardsRows[k].distribution_share</td>
+				<% if (j==0){%>
+				<td rowspan="<%=details.length%>"><%=rewardsRows[k].payout_address%></td>
+				<td rowspan="<%=details.length%>"><%=formatters.baseAmount(rewardsRows[k].reward_amount)%></td>
+				<td rowspan="<%=details.length%>"><%=formatters.share(rewardsRows[k].distribution_share)%></td>
+				<% } %>
+				<td><%=formatters.assetAmount(details_columns[0], details_columns[1])%></td>
+				<td><%=formatters.gbAmount(details_columns[2])%></td>
+				<td><%=formatters.gbAmount(details_columns[3])%></td>
+				<td><%=formatters.baseAmount(details_columns[4])%></td>
+
+
 			</tr>
+				<% }
+				}
+			 %>
+	</tbody>
+	</table>
+</div>
+</div>
 
-
-
-	rewards_rows
-	
-	</div>
 </section>
 </body>
 </html>

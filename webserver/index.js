@@ -4,7 +4,7 @@ const path = require('path');
 const db = require('ocore/db.js');
 
 
-function start(){
+function start(infoByPoolAsset){
 
 	const app = express();
 	const server = require('http').Server(app);
@@ -15,17 +15,13 @@ function start(){
 	app.use(express.urlencoded());
 
 	app.get('/', async (req, res) => {
-
-	const rewardsRows = db.query("SELECT payout_address, payment_unit, distribution_share,reward_amount, GROUP_CONCAT(reward_details) AS reward_details \n\
-		FROM (SELECT reward_id,rewards.reward_amount,distribution_share,payment_unit,\n\
-		payout_address,asset||'@'||asset_amount||'@'||asset_value||'@'||asset_weighted_value||'@'||per_asset_rewards.reward_amount AS reward_details \n\
-		FROM per_asset_rewards INNER JOIN rewards ON rewards.id=per_asset_rewards.reward_id \n\
-		WHERE per_asset_rewards.distribution_id=(SELECT MAX(id) FROM distributions)) GROUP BY reward_id;")
-
-		res.render('distribution.ejs', {
-			rewardsRows,
-			conf,
-		});
+		renderForDistribution(res);
+	});
+	app.get('/:id', async (req, res) => {
+		const id = parseInt(req.query.id);
+		if (!id)
+			return response.status(400).send('invalid distribution id');
+		renderForDistribution(res, id);
 	});
 
 	server.listen(conf.webServerPort, () => {
@@ -33,7 +29,44 @@ function start(){
 	});
 
 
+	async function renderForDistribution(res, id){
+
+		const distributionsRows = await db.query("SELECT id,datetime FROM distributions ORDER BY id DESC");
+
+		const rewardsRows = await db.query("SELECT payout_address, payment_unit, distribution_share,reward_amount, GROUP_CONCAT(reward_details) AS reward_details \n\
+		FROM (SELECT reward_id,rewards.reward_amount,distribution_share,payment_unit,\n\
+		payout_address,asset||'@'||asset_amount||'@'||asset_value||'@'||asset_weighted_value||'@'||per_asset_rewards.reward_amount AS reward_details \n\
+		FROM per_asset_rewards INNER JOIN rewards ON rewards.id=per_asset_rewards.reward_id \n\
+		WHERE per_asset_rewards.distribution_id=?) GROUP BY reward_id;", [id || distributionsRows[0].id])
+	
+		res.render('distribution.ejs', {
+			rewardsRows,
+			conf,
+			formatters,
+			distributionsRows,
+			id
+		});
+
+
+		
+	}
+
+	const formatters = {
+		assetAmount: (asset, amount) => {
+			const decimals = infoByPoolAsset[asset].decimals;
+			console.log("decimals " + decimals)
+			amount =  parseInt(amount) / (10 ** decimals)
+			return (decimals > 0 ? (amount).toPrecision(decimals) : amount) + " " + infoByPoolAsset[asset].symbol
+		},
+		gbAmount: amount => parseFloat(amount).toPrecision(9) + " GB",
+		baseAmount: amount => (parseInt(amount) / 1e9).toPrecision(9) + " GB",
+		assetSymbol: asset => infoByPoolAsset[asset].symbol,
+		share: amount => (amount * 100).toPrecision(3)+"%"
+	}
+
 }
+
+
 
 /*		id INTEGER PRIMARY KEY AUTOINCREMENT, \n\
 		distribution_id INTEGER, \n\
@@ -56,4 +89,4 @@ function start(){
 		UNIQUE(reward_id, asset), \n\*/
 
 
-start();
+exports.start = start;

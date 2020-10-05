@@ -11,28 +11,96 @@ const mutex = require('ocore/mutex.js');
 const dag = require('aabot/dag.js');
 const fetch = require('node-fetch');
 const sqlite_tables = require('./sqlite_tables.js');
+const webserver = require('./webserver');
 
 eventBus.on('headless_wallet_ready', start);
 
 const eligiblePools = conf.eligiblePools;
 const valueByPoolsAssets = {};
+const infoByPoolAsset = {};
+var my_address;
 
 async function start(){
 	await sqlite_tables.create();
+	my_address = await headlessWallet.readSingleAddress();
 	await discoverPoolAssets();
 	console.log("eligiblePools")
 	console.log(eligiblePools);
-	require('./webserver');
+	webserver.start(infoByPoolAsset);
+	distributeIfReady();
 	makeNextDistribution();
-	setInterval(makeNextDistribution, 60 * 1000)
+	setInterval(makeNextDistribution, 60 * 1000);
+	setInterval(distributeIfReady, 60 * 1000);
 
 }
 
 async function distributeIfReady(){
+	const unlock = await mutex.lock(['distribute']);
+
+	const rows = await db.query("SELECT datetime,id FROM distributions WHERE is_frozen=1 AND is_completed=0");
+
+	if (!rows[0]){
+		console.log("no distribution ready")
+		return unlock();
+	}
+	const arrOutputs = await createDistributionOutputs(rows[0].id, rows[0].datetime)
+
+	if (!arrOutputs) { // done
+		db.query("UPDATE distributions SET is_completed=1 WHERE id=?", [rows[0].id], function() {});
+		//return verifyDistribution(rows[0].id, rows[0].creation_date);
+		return unlock();
+	}
+	var opts = {
+		base_outputs: arrOutputs,
+		change_address: my_address
+	};
+	console.log(opts);
+	headlessWallet.sendMultiPayment(opts, async function(err, unit) {
+		if (err) {
+			//notifications.notifyAdmin("a payment failed", err);
+			setTimeout(distributeIfReady, 300 * 1000);
+			return unlock();
+
+		} else {
+			await db.query("UPDATE rewards SET payment_unit=? WHERE payout_address IN (?) AND distribution_id=?", 
+			[unit, arrOutputs.map(o => o.address), rows[0].id]);
+			setTimeout(distributeIfReady, 30 * 1000);
+			return unlock();
+		}
+	});
+}
 
 
+async function createDistributionOutputs(distributionID, distributionDate, handleOutputs) {
+	const rows = await db.query(
+		"SELECT reward_amount,payout_address \n\
+		FROM rewards \n\
+		LEFT JOIN outputs \n\
+			ON rewards.payout_address=outputs.address \n\
+			AND asset IS NULL \n\
+			AND (SELECT address FROM unit_authors WHERE unit_authors.unit=outputs.unit)=? \n\
+			AND (SELECT creation_date FROM units WHERE units.unit=outputs.unit)>? \n\
+			AND reward_amount=outputs.amount\n\
+		WHERE outputs.address IS NULL \n\
+			AND distribution_id=?  \n\
+			AND payment_unit IS NULL \n\
+		ORDER BY reward_amount \n\
+		LIMIT ?", [my_address, distributionDate, distributionID, constants.MAX_OUTPUTS_PER_PAYMENT_MESSAGE-1]);
+			if (rows.length === 0)
+				return;
+			var arrOutputs = [];
+			rows.forEach(function(row) {
+				arrOutputs.push({
+					amount: row.reward_amount,
+					address: row.payout_address
+				});
+
+
+			});
+			return arrOutputs;
 
 }
+
 
 async function makeNextDistribution(){
 
@@ -58,8 +126,8 @@ async function makeNextDistribution(){
 	}
 
 	if (rows[0].is_completed) // the previous distribution is completed, let's create an id and a planned time for the next one
-		await db.query("INSERT INTO distributions (datetime) VALUES ((SELECT date(datetime, '+"+ conf.hoursBetweenDistributions + " hours')\n\
-		FROM distributions ORDER BY id DESC LIMIT 1)") // 
+		await db.query("INSERT INTO distributions (datetime) VALUES ((SELECT datetime(datetime, '+"+ conf.hoursBetweenDistributions + " hours')\n\
+		FROM distributions ORDER BY id DESC LIMIT 1))") // 
 
 	const distri_id = (await db.query("SELECT MAX(id) AS id FROM distributions"))[0].id;
 
@@ -119,7 +187,7 @@ console.log(total_value)
 			WHERE id=(SELECT MAX(id) FROM rewards)",[share, reward_amount]);
 		}
 	}
-	await conn.query("UPDATE distributions SET is_frozen=1 WHERE datetime > date('now')");
+	await conn.query("UPDATE distributions SET is_frozen=1 WHERE datetime < datetime('now')");
 	await conn.query("COMMIT");
 	conn.release();
 	unlock();
@@ -133,6 +201,11 @@ async function discoverPoolAssets(){
 		eligiblePools[pool_address].pool_asset = pool_asset;
 		eligiblePools[pool_address].asset0 = definition[1].params.asset0;
 		eligiblePools[pool_address].asset1 = definition[1].params.asset1;
+
+		const symbol = await dag.readAAStateVar(conf.token_registry_aa_address, "a2s_" + pool_asset);
+		const desc_hash = await dag.readAAStateVar(conf.token_registry_aa_address, "current_desc_" + pool_asset);
+		const decimals = await dag.readAAStateVar(conf.token_registry_aa_address, "decimals_" + desc_hash);
+		infoByPoolAsset[pool_asset] = {symbol, decimals};
 	}
 }
 
@@ -151,28 +224,14 @@ async function determinePoolAssetsValues(){
 
 			const balances = await dag.readBalance(pool_address); 
 
-
-			console.log(balances);
-			console.log(assets_data);
-			console.log(asset0);
-
-			console.log(getAssetGbValue(asset0));
-			console.log(asset1);
-
-			console.log(getAssetGbValue(asset1));
-
-			console.log(balances[asset1].stable);
-			console.log(balances[asset0].stable);
-
 			if (!balances[asset0] || !balances[asset0].stable || !balances[asset1] || !balances[asset1].stable)
 				continue;
 			const total_pool_value = balances[asset0].stable * getAssetGbValue(asset0) + balances[asset1].stable * getAssetGbValue(asset1);
 			
-			
-			
-			//decimals missing
 			const pool_asset_supply = await dag.readAAStateVar(pool_address, "supply");
-			const asset_value = (total_pool_value / pool_asset_supply) 
+			const asset_value = total_pool_value / pool_asset_supply;
+			if (!asset_value)
+				throw Error("no gb value for asset " + pool_asset);
 
 			valueByPoolsAssets[pool_asset] =  {
 				value: asset_value,
@@ -183,8 +242,7 @@ async function determinePoolAssetsValues(){
 		console.log("error " + e.message);
 		return false;
 	}
-	console.log("valueByPoolsAssets")
-	console.log(valueByPoolsAssets)
+
 	return true;
 
 	function getAssetGbValue(asset){
