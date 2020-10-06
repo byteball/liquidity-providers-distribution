@@ -1,72 +1,116 @@
 <!DOCTYPE html>
 <html>
-<head>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>Hello Bulma!</title>
-	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.1/css/bulma.min.css">
-</head>
-<body>
-<section class="section">
-		<h1 class="title">
-			Liquidity providers distribution
-		</h1>
-		<div class="columns">
-			<div class="column">
-				<button class="button is-large is-fullwidth is-primary">Next distribution</button>
-				<button class="button is-large is-fullwidth">Distribution 2</button>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Liquidity providers distribution</title>
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.1/css/bulma.min.css">
+	</head>
+	<body>
+		<section class="section">
+			<h2 class="title is-2">
+				Distribution to liquidity providers
+			</h2>
+			<div class="content">Every week, liquidity providers for Oswap.io are rewarded with bytes from undistributed funds.</div>
+			<h5 class="title is-5">
+				Eligible pools (weight):
+			</h5>
 
-				<button class="button is-large is-fullwidth">Distribution 1</button>
-				<button class="button is-large is-fullwidth">Distribution 0</button>
+			<div class="tags are-medium">
+			<% for (var address in eligiblePoolsByAddress) { %>
+				<span class="tag is-link is-light">
+					<a href="<%= conf.oswap_base_url + address %>" target="_blank">
+						
+					<%= eligiblePoolsByAddress[address].asset0_info.symbol + "-" + eligiblePoolsByAddress[address].asset1_info.symbol %>
+						(<%= eligiblePoolsByAddress[address].coeff %> %)
+
+					</a>
+				</span>
+
+				<% } %>
+			</div>
+		</section>
+			<section class="section">
+
+			<div class="columns">
+				<div class="column">
+					<% for(var k = distributionsRows.length - 1; k >=0; k--) { 
+						if (distributionsRows[k].id == distributionsRows.length) {
+						%>
+						<a href="/"><button class="button is-large is-fullwidth <%= distributionsRows[k].id == selected_id ? 'is-primary' : '' %>" >Next distribution</button></a>
+						<% } else { %>
+						<a href="<%=distributionsRows[k].id%>"><button class="button is-large is-fullwidth <%= distributionsRows[k].id == selected_id ? 'is-primary' : ''%>">Distribution # <%= distributionsRows[k].id %></button></a>
+
+					<% }
+						} %>
+				</div>
+				<div class="box column is-four-fifths">
+					<div class="content">
+						<h5 class="title is-5">
+							<% if(selected_id == distributionsRows.length){%>
+
+								<h6 class="title is-6">	Next distribution</h6>
+							<%} else {%>
+
+							<%}%>
+
+						</h5>
+						<ul>
+							<li>
+							<% if(selected_id == distributionsRows.length){%>
+							Planned on <%= distributionsRows[selected_id - 1].datetime %>
+							<%} else {%>
+							Planned on <%= distributionsRows[selected_id -1].datetime %>, realized on <%= distributionsRows[selected_id -1].snapshot_time %> 
+							<%}%>
+							</li>
+							<li>Total pools assets locked value: <%= formatters.gbAmount(distributionsRows[selected_id -1].assets_total_value) %></li>
+							<li>Total pools assets locked weighted value: <%= formatters.gbAmount(distributionsRows[selected_id -1].assets_total_weighted_value) %></li>
+						</ul>
+					<table class="table">
+
+					<thead>
+					<tr>
+						<th>Address</th>
+						<th>Reward</th>
+						<% if(selected_id !== distributionsRows.length){%>
+						<th>Payment unit</th>
+						<% } %>
+						<th>Share</th>
+						<th>Asset</th>
+						<th>Value</th>
+						<th>Weighted value</th>
+						<th>Reward</th>
+					</tr>
+					</thead>
+					<tbody>
+						<% for(var k in rewardsRows) {
+							const details = rewardsRows[k].reward_details.split(',');
+							for(var j in details) {
+								const details_columns = details[j].split("@");
+						%>
+							<tr>
+								<% if (j==0){%>
+								<td rowspan="<%=details.length%>"><%=rewardsRows[k].payout_address%></td>
+								<td rowspan="<%=details.length%>"><%=formatters.baseAmount(rewardsRows[k].reward_amount)%></td>
+								<% if (rewardsRows[k].payment_unit){ %>
+								<td rowspan="<%=details.length%>"><%-formatters.unit(rewardsRows[k].payment_unit)%></td>
+								<% } %>
+								<td rowspan="<%=details.length%>"><%=formatters.share(rewardsRows[k].distribution_share)%></td>
+								<% } %>
+								<td><%=formatters.assetAmount(details_columns[0], details_columns[1])%></td>
+								<td><%=formatters.gbAmount(details_columns[2])%></td>
+								<td><%=formatters.gbAmount(details_columns[3])%></td>
+								<td><%=formatters.baseAmount(details_columns[4])%></td>
+							</tr>
+							<% }
+						}%>
+					</tbody>
+				</table>
+			</div>
 
 			</div>
-			<div class="column is-four-fifths">
+		</div>
 
-	<table class="table">
-		<section class="section">
-
-			<% if(!id){%>
-			Next distribution planned on: <%= distributionsRows[0].datetime %>
-			<%}%>
 		</section>
-		<thead>
-		  <tr>
-			<th>Address</th>
-			<th>Reward</th>
-			<th>Share</th>
-			<th>Asset</th>
-			<th>Value</th>
-			<th>Weighted value</th>
-			<th>Reward</th>
-		  </tr>
-		</thead>
-		<tbody>
-			<% for(var k in rewardsRows) {
-				const details = rewardsRows[k].reward_details.split(',');
-				 for(var j in details) {
-					const details_columns = details[j].split("@");
-			%>
-			<tr>
-				<% if (j==0){%>
-				<td rowspan="<%=details.length%>"><%=rewardsRows[k].payout_address%></td>
-				<td rowspan="<%=details.length%>"><%=formatters.baseAmount(rewardsRows[k].reward_amount)%></td>
-				<td rowspan="<%=details.length%>"><%=formatters.share(rewardsRows[k].distribution_share)%></td>
-				<% } %>
-				<td><%=formatters.assetAmount(details_columns[0], details_columns[1])%></td>
-				<td><%=formatters.gbAmount(details_columns[2])%></td>
-				<td><%=formatters.gbAmount(details_columns[3])%></td>
-				<td><%=formatters.baseAmount(details_columns[4])%></td>
-
-
-			</tr>
-				<% }
-				}
-			 %>
-	</tbody>
-	</table>
-</div>
-</div>
-
-</section>
-</body>
+	</body>
 </html>

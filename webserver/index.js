@@ -4,7 +4,7 @@ const path = require('path');
 const db = require('ocore/db.js');
 
 
-function start(infoByPoolAsset){
+function start(infoByPoolAsset, eligiblePoolsByAddress){
 
 	const app = express();
 	const server = require('http').Server(app);
@@ -18,9 +18,9 @@ function start(infoByPoolAsset){
 		renderForDistribution(res);
 	});
 	app.get('/:id', async (req, res) => {
-		const id = parseInt(req.query.id);
+		const id = parseInt(req.params.id);
 		if (!id)
-			return response.status(400).send('invalid distribution id');
+			return res.status(400).send('invalid distribution id');
 		renderForDistribution(res, id);
 	});
 
@@ -31,20 +31,23 @@ function start(infoByPoolAsset){
 
 	async function renderForDistribution(res, id){
 
-		const distributionsRows = await db.query("SELECT id,datetime FROM distributions ORDER BY id DESC");
+		const distributionsRows = await db.query("SELECT id,snapshot_time,datetime,assets_total_value,assets_total_weighted_value \n\
+		FROM distributions ORDER BY id ASC");
+		const selected_id = id || distributionsRows.length; // first id is 1
 
 		const rewardsRows = await db.query("SELECT payout_address, payment_unit, distribution_share,reward_amount, GROUP_CONCAT(reward_details) AS reward_details \n\
 		FROM (SELECT reward_id,rewards.reward_amount,distribution_share,payment_unit,\n\
 		payout_address,asset||'@'||asset_amount||'@'||asset_value||'@'||asset_weighted_value||'@'||per_asset_rewards.reward_amount AS reward_details \n\
 		FROM per_asset_rewards INNER JOIN rewards ON rewards.id=per_asset_rewards.reward_id \n\
-		WHERE per_asset_rewards.distribution_id=?) GROUP BY reward_id;", [id || distributionsRows[0].id])
+		WHERE per_asset_rewards.distribution_id=?) GROUP BY reward_id;", [selected_id])
 	
 		res.render('distribution.ejs', {
 			rewardsRows,
 			conf,
 			formatters,
 			distributionsRows,
-			id
+			selected_id,
+			eligiblePoolsByAddress
 		});
 
 
@@ -61,7 +64,8 @@ function start(infoByPoolAsset){
 		gbAmount: amount => parseFloat(amount).toPrecision(9) + " GB",
 		baseAmount: amount => (parseInt(amount) / 1e9).toPrecision(9) + " GB",
 		assetSymbol: asset => infoByPoolAsset[asset].symbol,
-		share: amount => (amount * 100).toPrecision(3)+"%"
+		share: amount => (amount * 100).toPrecision(3)+"%",
+		unit: unit => unit ? '<a href="'+conf.explorer_base_url+ "/#" + unit +'">'+unit.slice(8)+'...</a>' : ''
 	}
 
 }

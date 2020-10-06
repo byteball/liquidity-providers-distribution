@@ -15,7 +15,7 @@ const webserver = require('./webserver');
 
 eventBus.on('headless_wallet_ready', start);
 
-const eligiblePools = conf.eligiblePools;
+const eligiblePoolsByAddress = conf.eligiblePools;
 const valueByPoolsAssets = {};
 const infoByPoolAsset = {};
 var my_address;
@@ -24,29 +24,34 @@ async function start(){
 	await sqlite_tables.create();
 	my_address = await headlessWallet.readSingleAddress();
 	await discoverPoolAssets();
-	console.log("eligiblePools")
-	console.log(eligiblePools);
-	webserver.start(infoByPoolAsset);
-	distributeIfReady();
-	makeNextDistribution();
-	setInterval(makeNextDistribution, 60 * 1000);
-	setInterval(distributeIfReady, 60 * 1000);
-
+	console.log("eligiblePoolsByAddress")
+	console.log(eligiblePoolsByAddress);
+	webserver.start(infoByPoolAsset, eligiblePoolsByAddress);
+	loop();
+	setInterval(loop, 60 * 1000);
 }
+
+async function loop(){
+	await makeNextDistribution();
+	await distributeIfReady();
+}
+
 
 async function distributeIfReady(){
 	const unlock = await mutex.lock(['distribute']);
 
-	const rows = await db.query("SELECT datetime,id FROM distributions WHERE is_frozen=1 AND is_completed=0");
+	const rows = await db.query("SELECT datetime,snapshot_time,id FROM distributions WHERE is_frozen=1 AND is_completed=0");
 
+	if (rows.length > 1)
+		throw Error("More than 1 distribution to be made?")
 	if (!rows[0]){
 		console.log("no distribution ready")
 		return unlock();
 	}
-	const arrOutputs = await createDistributionOutputs(rows[0].id, rows[0].datetime)
+	const arrOutputs = await createDistributionOutputs(rows[0].id, rows[0].snapshot_time)
 
 	if (!arrOutputs) { // done
-		db.query("UPDATE distributions SET is_completed=1 WHERE id=?", [rows[0].id], function() {});
+		await db.query("UPDATE distributions SET is_completed=1 WHERE id=?", [rows[0].id]);
 		//return verifyDistribution(rows[0].id, rows[0].creation_date);
 		return unlock();
 	}
@@ -71,7 +76,7 @@ async function distributeIfReady(){
 }
 
 
-async function createDistributionOutputs(distributionID, distributionDate, handleOutputs) {
+async function createDistributionOutputs(distributionID, distributionSnapshotDate) {
 	const rows = await db.query(
 		"SELECT reward_amount,payout_address \n\
 		FROM rewards \n\
@@ -85,9 +90,9 @@ async function createDistributionOutputs(distributionID, distributionDate, handl
 			AND distribution_id=?  \n\
 			AND payment_unit IS NULL \n\
 		ORDER BY reward_amount \n\
-		LIMIT ?", [my_address, distributionDate, distributionID, constants.MAX_OUTPUTS_PER_PAYMENT_MESSAGE-1]);
+		LIMIT ?", [my_address, distributionSnapshotDate, distributionID, constants.MAX_OUTPUTS_PER_PAYMENT_MESSAGE-1]);
 			if (rows.length === 0)
-				return;
+				return null;
 			var arrOutputs = [];
 			rows.forEach(function(row) {
 				arrOutputs.push({
@@ -97,7 +102,7 @@ async function createDistributionOutputs(distributionID, distributionDate, handl
 
 
 			});
-			return arrOutputs;
+	return arrOutputs;
 
 }
 
@@ -187,6 +192,8 @@ console.log(total_value)
 			WHERE id=(SELECT MAX(id) FROM rewards)",[share, reward_amount]);
 		}
 	}
+
+	await conn.query("UPDATE distributions SET snapshot_time=datetime('now') WHERE id=?", [distri_id]);
 	await conn.query("UPDATE distributions SET is_frozen=1 WHERE datetime < datetime('now')");
 	await conn.query("COMMIT");
 	conn.release();
@@ -194,19 +201,27 @@ console.log(total_value)
 }
 
 async function discoverPoolAssets(){
-	for (var pool_address in eligiblePools ){
+	for (var pool_address in eligiblePoolsByAddress ){
 		const definition = await dag.readAADefinition(pool_address);
 		const factory_aa = definition[1].params.factory;	
 		const pool_asset = await dag.readAAStateVar(factory_aa, "pools." + pool_address +".asset");
-		eligiblePools[pool_address].pool_asset = pool_asset;
-		eligiblePools[pool_address].asset0 = definition[1].params.asset0;
-		eligiblePools[pool_address].asset1 = definition[1].params.asset1;
-
-		const symbol = await dag.readAAStateVar(conf.token_registry_aa_address, "a2s_" + pool_asset);
-		const desc_hash = await dag.readAAStateVar(conf.token_registry_aa_address, "current_desc_" + pool_asset);
-		const decimals = await dag.readAAStateVar(conf.token_registry_aa_address, "decimals_" + desc_hash);
-		infoByPoolAsset[pool_asset] = {symbol, decimals};
+		eligiblePoolsByAddress[pool_address].pool_asset = pool_asset;
+		eligiblePoolsByAddress[pool_address].asset0 = definition[1].params.asset0;
+		eligiblePoolsByAddress[pool_address].asset1 = definition[1].params.asset1;
+		eligiblePoolsByAddress[pool_address].asset0_info = await getAssetInfo(definition[1].params.asset0);
+		eligiblePoolsByAddress[pool_address].asset1_info = await getAssetInfo(definition[1].params.asset1);
+		infoByPoolAsset[pool_asset] = await getAssetInfo(pool_asset);
 	}
+}
+
+async function getAssetInfo(asset){
+	if (asset == 'base')
+		return {symbol: 'GBYTE', decimals: 9};
+	const symbol = await dag.readAAStateVar(conf.token_registry_aa_address, "a2s_" + asset);
+	const desc_hash = await dag.readAAStateVar(conf.token_registry_aa_address, "current_desc_" + asset);
+	const decimals = await dag.readAAStateVar(conf.token_registry_aa_address, "decimals_" + desc_hash);
+	return {symbol, decimals};
+
 }
 
 async function determinePoolAssetsValues(){
@@ -217,11 +232,10 @@ async function determinePoolAssetsValues(){
 		return false;
 	}
 	try {
-		for (var pool_address in eligiblePools){
-			const asset0 = eligiblePools[pool_address].asset0;
-			const asset1 = eligiblePools[pool_address].asset1;
-			const pool_asset = eligiblePools[pool_address].pool_asset;
-
+		for (var pool_address in eligiblePoolsByAddress){
+			const asset0 = eligiblePoolsByAddress[pool_address].asset0;
+			const asset1 = eligiblePoolsByAddress[pool_address].asset1;
+			const pool_asset = eligiblePoolsByAddress[pool_address].pool_asset;
 			const balances = await dag.readBalance(pool_address); 
 
 			if (!balances[asset0] || !balances[asset0].stable || !balances[asset1] || !balances[asset1].stable)
@@ -235,7 +249,7 @@ async function determinePoolAssetsValues(){
 
 			valueByPoolsAssets[pool_asset] =  {
 				value: asset_value,
-				weighted_value: asset_value * (eligiblePools[pool_address].coeff / 100)
+				weighted_value: asset_value * (eligiblePoolsByAddress[pool_address].coeff / 100)
 			};
 		}
 	} catch(e) {
