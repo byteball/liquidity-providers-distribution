@@ -1,0 +1,86 @@
+[
+	"autonomous agent",
+	{
+		"init": `{
+			$lock_period = 7 * 24 * 3600;
+			$registry_aa = "O6H6ZIFI57X3PLTYHOCVYPP5A553CYFQ";
+			$address = trigger.address;
+			if (is_aa($address))
+				bounce("Asset must be sent from a plain wallet, not an AA");
+			if (trigger.output[[asset=base]].amount > 10000)
+				bounce("Bytes amount should be only 10000");
+
+		}`,
+		"messages": {
+			"cases": 
+			[
+				{
+					"if" : `{trigger.output[[asset!=base]].amount > 0}`,
+					"init": `{
+						$received_asset = trigger.output[[asset!=base]].asset;
+						if ($received_asset == "ambiguous")
+							bounce("Different assets cannot be handled at same time");
+					}`,
+					"messages": [
+						{
+							"app": "state",
+							"state": `{
+								var["amount_" || $received_asset || "_" || $address] += trigger.output[[asset!=base]].amount;
+								var["ts_" || $received_asset || "_" || $address] = timestamp;
+								response['info'] = "This asset will be locked until " || timestamp_to_string(timestamp + $lock_period);
+							}`
+						}
+					],
+				},
+				{
+					"if" : `{trigger.data.withdraw}`,
+					"init": `{
+						if (asset[trigger.data.withdraw].exists)
+							$asset = trigger.data.withdraw;
+						else {
+							$asset = var[$registry_aa]["s2a_" || trigger.data.withdraw];
+							if (!$asset)
+								bounce("unknown symbol");
+						}
+						$amount_available = var["amount_" || $asset || "_" || $address];
+						if (!$amount_available)
+							bounce("You don't have deposit for this asset");
+						$locktime = var["ts_" || $asset || "_" || $address];
+						if ($locktime AND timestamp < $locktime + $lock_period)
+							bounce("This asset is still locked, retry in " || round(($locktime + $lock_period - timestamp) / 3600) || " hours");
+						if (trigger.data.amount){
+							if (!is_valid_amount(trigger.data.amount))
+								bounce("Invalid amount");
+							if(trigger.data.amount > $amount_available)
+								bounce("Only " || $amount_available || " available for withdraw");
+							$amount = trigger.data.amount;
+						} else {
+							$amount = $amount_available;
+						}
+					}`,
+					"messages": [
+						{
+							"app": "payment",
+							"payload": {
+								"asset": "{$asset}",
+								"outputs": [
+									{
+										"address": "{$address}",
+										"amount": "{ $amount }"
+									}
+								]
+							}
+						},
+						{
+							"app": "state",
+							"state": `{
+								var["amount_" || $asset || "_" || $address] -= $amount;
+								var["ts_" || $asset || "_" || $address] = false;
+							}`
+						}
+					],
+				}
+			]
+		}
+	}
+]

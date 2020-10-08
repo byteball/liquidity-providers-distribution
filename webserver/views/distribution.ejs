@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Distribution to liquidity miners</title>
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.1/css/bulma.min.css">
+	</head>
+	<body>
+		<section class="section">
+			<h2 class="title is-2">
+				Distribution to liquidity miners
+			</h2>
+			<div class="content">
+				<p>Every <%= conf.hoursBetweenDistributions / 24 %> days, liquidity providers for <%- formatters.url(conf.oswap_main_url) %> are rewarded with bytes from undistributed funds.</p>
+				<p>To participate, one has to send the tokens from eligible pools to this Autonomous Agent: <%-formatters.address(conf.assets_locker_aa) %> that will lock the tokens for 7 days.</p>
+				<p>A total of <%= formatters.baseAmount(conf.distribution_amount, 0) %> is shared by all participants according to the value they have locked adjusted by a weight indicated below.</p>
+			</div>
+			<h5 class="title is-5">
+				Eligible pools (weight):
+			</h5>
+
+			<div class="tags are-medium">
+			<% for (var address in eligiblePoolsByAddress) { %>
+				<span class="tag is-link is-light">
+					<a href="<%= conf.oswap_base_url + address %>" target="_blank">
+					<%= eligiblePoolsByAddress[address].asset0_info.symbol + "-" + eligiblePoolsByAddress[address].asset1_info.symbol %>
+						(<%= eligiblePoolsByAddress[address].coeff %> %)
+
+					</a>
+				</span>
+
+				<% } %>
+			</div>
+		</section>
+		<section class="section">
+
+			<div class="columns is-mobile">
+				<div class="column is-2">
+					<% for(var k = distributionsRows.length - 1; k >=0; k--) { 
+						if (distributionsRows[k].id == distributionsRows.length) {
+						%>
+						<a href="/"><button class="button mb-1 is-hidden-touch is-medium is-fullwidth <%= distributionsRows[k].id == selected_id ? 'is-primary' : '' %>" >Next distribution</button></a>
+						<a href="/"><button class="button mb-1 is-hidden-desktop is-small is-fullwidth <%= distributionsRows[k].id == selected_id ? 'is-primary' : '' %>" >Next distribution</button></a>
+
+						<% } else { %>
+						<a href="<%=distributionsRows[k].id%>"><button class="button mb-1 is-hidden-touch is-medium is-fullwidth <%= distributionsRows[k].id == selected_id ? 'is-primary' : ''%>">Distribution #<%= distributionsRows[k].id %></button></a>
+						<a href="<%=distributionsRows[k].id%>"><button class="button mb-1 is-hidden-desktop is-small is-fullwidth <%= distributionsRows[k].id == selected_id ? 'is-primary' : ''%>">Distribution #<%= distributionsRows[k].id %></button></a>
+
+					<% }
+						} %>
+				</div>
+				<div class="box column is-10">
+					<div class="content">
+						<h5 class="title is-5">
+							<% if(selected_id == distributionsRows.length){%>
+
+								<h5 class="title is-5">	Next distribution</h5>
+							<%} else {%>
+								<h5 class="title is-5">	Distribution #<%= distributionsRows[selected_id -1].id%></h5>
+							<%}%>
+
+						</h5>
+						<ul>
+							<li>
+							<% if(selected_id == distributionsRows.length){%>
+							Planned on <%= distributionsRows[selected_id - 1].datetime %>  (GMT)
+							<%} else {%>
+							Planned on <%= distributionsRows[selected_id -1].datetime %>, realized on <%= distributionsRows[selected_id -1].snapshot_time %> (GMT)
+							<%}%>
+							</li>
+							<li>Total pools assets locked value: <%= formatters.gbAmount(distributionsRows[selected_id -1].assets_total_value) %></li>
+							<li>Total pools assets locked weighted value: <%= formatters.gbAmount(distributionsRows[selected_id -1].assets_total_weighted_value) %></li>
+						</ul>
+						<div class="table-container">
+							<table class="table">
+								<thead>
+									<tr>
+										<th>Address</th>
+										<th>Reward</th>
+										<% if(selected_id !== distributionsRows.length){%>
+										<th>Payment unit</th>
+										<% } %>
+										<th>Share</th>
+										<th>Asset</th>
+										<th>Value</th>
+										<th>Weighted value</th>
+										<th>Reward</th>
+									</tr>
+								</thead>
+								<tbody>
+									<% for(var k in rewardsRows) {
+										const details = rewardsRows[k].reward_details.split(',');
+										for(var j in details) {
+											const details_columns = details[j].split("@");
+									%>
+										<tr>
+											<% if (j==0){%>
+											<td rowspan="<%=details.length%>"><%=rewardsRows[k].payout_address%></td>
+											<td rowspan="<%=details.length%>"><%=formatters.baseAmount(rewardsRows[k].reward_amount)%></td>
+											<% if (rewardsRows[k].payment_unit){ %>
+											<td rowspan="<%=details.length%>"><%-formatters.unit(rewardsRows[k].payment_unit)%></td>
+											<% } %>
+											<td rowspan="<%=details.length%>"><%=formatters.share(rewardsRows[k].distribution_share)%></td>
+											<% } %>
+											<td><%=formatters.assetAmount(details_columns[0], details_columns[1])%></td>
+											<td><%=formatters.gbAmount(details_columns[2])%></td>
+											<td><%=formatters.gbAmount(details_columns[3])%></td>
+											<td><%=formatters.baseAmount(details_columns[4])%></td>
+										</tr>
+										<% }
+									}%>
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+			</div>
+
+		</section>
+	</body>
+</html>
