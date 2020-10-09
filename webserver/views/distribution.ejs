@@ -13,7 +13,8 @@
 			</h2>
 			<div class="content">
 				<p>Every <%= conf.hoursBetweenDistributions / 24 %> days, liquidity providers for <%- formatters.url(conf.oswap_main_url) %> are rewarded with bytes from undistributed funds.</p>
-				<p>To participate, one has to send the tokens from eligible pools to this Autonomous Agent: <%-formatters.address(conf.assets_locker_aa) %> that will lock the tokens for 7 days.</p>
+				<p>To participate, one has to send the tokens from eligible pools to this Autonomous Agent: <%-formatters.address(conf.assets_locker_aa) %> 
+					(<a href="<%=conf.wallet_uri +':'+conf.assets_locker_aa%>">send tokens</a>) that will lock the tokens for 7 days.</p>
 				<p>A total of <%= formatters.baseAmount(conf.distribution_amount, 0) %> is shared by all participants according to the value they have locked adjusted by a weight indicated below.</p>
 			</div>
 			<h5 class="title is-5">
@@ -66,7 +67,7 @@
 							<% if(selected_id == distributionsRows.length){%>
 							Planned on <%= distributionsRows[selected_id - 1].datetime %>  (GMT)
 							<%} else {%>
-							Planned on <%= distributionsRows[selected_id -1].datetime %>, realized on <%= distributionsRows[selected_id -1].snapshot_time %> (GMT)
+							Planned on <%= distributionsRows[selected_id -1].datetime %> (GMT), realized on <%= distributionsRows[selected_id -1].snapshot_time %> (GMT)
 							<%}%>
 							</li>
 							<li>Total pools assets locked value: <%= formatters.gbAmount(distributionsRows[selected_id -1].assets_total_value) %></li>
@@ -96,12 +97,12 @@
 									%>
 										<tr>
 											<% if (j==0){%>
-											<td rowspan="<%=details.length%>"><%=rewardsRows[k].payout_address%></td>
-											<td rowspan="<%=details.length%>"><%=formatters.baseAmount(rewardsRows[k].reward_amount)%></td>
+											<td style="vertical-align: middle;" rowspan="<%=details.length%>"><%-formatters.address(rewardsRows[k].payout_address)%></td>
+											<td style="vertical-align: middle;" rowspan="<%=details.length%>"><%=formatters.baseAmount(rewardsRows[k].reward_amount)%></td>
 											<% if (rewardsRows[k].payment_unit){ %>
-											<td rowspan="<%=details.length%>"><%-formatters.unit(rewardsRows[k].payment_unit)%></td>
+											<td style="vertical-align: middle;" rowspan="<%=details.length%>"><%-formatters.unit(rewardsRows[k].payment_unit)%></td>
 											<% } %>
-											<td rowspan="<%=details.length%>"><%=formatters.share(rewardsRows[k].distribution_share)%></td>
+											<td style="vertical-align: middle;" rowspan="<%=details.length%>"><%=formatters.share(rewardsRows[k].distribution_share)%></td>
 											<% } %>
 											<td><%=formatters.assetAmount(details_columns[0], details_columns[1])%></td>
 											<td><%=formatters.gbAmount(details_columns[2])%></td>

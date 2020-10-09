@@ -309,15 +309,15 @@ describe('Check simple AA', function () {
 
 		var { unit, error } = await this.network.wallet.alice.sendMulti({
 
-					asset: this.network.asset.pool_asset_1,
-					asset_outputs:[{
-						amount: 60000,
-						address: this.network.agent.locker,
-					}],
-					base_outputs:[{
-						amount:  10000,
-						address: this.network.agent.locker,
-					}]
+				asset: this.network.asset.pool_asset_1,
+				asset_outputs:[{
+					amount: 60000,
+					address: this.network.agent.locker,
+				}],
+				base_outputs:[{
+					amount:  10000,
+					address: this.network.agent.locker,
+				}]
 			}
 		);
 

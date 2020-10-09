@@ -57,12 +57,12 @@ function start(infoByPoolAsset, eligiblePoolsByAddress){
 		assetAmount: (asset, amount) => {
 			const decimals = infoByPoolAsset[asset].decimals;
 			amount =  parseInt(amount) / (10 ** decimals)
-			return (decimals > 0 ? (amount).toFixed(decimals) : amount) + " " + infoByPoolAsset[asset].symbol
+			return parseFloat((decimals > 0 ? (amount).toFixed(decimals) : amount)) + " " + infoByPoolAsset[asset].symbol
 		},
-		gbAmount: amount => parseFloat(amount).toFixed(6) + " GB",
-		baseAmount: (amount, decimals) => (parseInt(amount) / 1e9).toFixed(typeof decimals == "number" ? decimals : 6) + " GB",
+		gbAmount: amount => parseFloat(parseFloat(amount).toFixed(6)) + " GB",
+		baseAmount: (amount, decimals) => parseFloat((parseInt(amount) / 1e9).toFixed(typeof decimals == "number" ? decimals : 6)) + " GB",
 		assetSymbol: asset => infoByPoolAsset[asset].symbol,
-		share: amount => (amount * 100).toPrecision(3)+"%",
+		share: amount => parseFloat((amount * 100).toPrecision(3))+"%",
 		unit: unit => unit ? '<a href="'+conf.explorer_base_url+ "/#" + unit +'" target="_blank">'+unit.slice(0,8)+'...</a>' : '',
 		address: address => '<a href="'+conf.explorer_base_url+ "/#" + address +'" target="_blank">'+address+'</a>',
 		url: url => '<a href="'+ url +'" target="_blank">'+url+'</a>'

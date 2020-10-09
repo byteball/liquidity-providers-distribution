@@ -18,8 +18,9 @@ const webserver = require('./webserver');
 eventBus.on('headless_wallet_ready', start);
 
 const eligiblePoolsByAddress = conf.eligiblePools;
-const valueByPoolsAssets = {};
+const valueByPoolAsset = {};
 const infoByPoolAsset = {};
+
 var my_address;
 
 async function start(){
@@ -61,7 +62,6 @@ async function distributeIfReady(){
 
 	if (!arrOutputs) { // done
 		await db.query("UPDATE distributions SET is_completed=1 WHERE id=?", [rows[0].id]);
-		//return verifyDistribution(rows[0].id, rows[0].creation_date);
 		return unlock();
 	}
 	var opts = {
@@ -71,6 +71,7 @@ async function distributeIfReady(){
 
 	headlessWallet.sendMultiPayment(opts, async function(err, unit) {
 		if (err) {
+			console.log()
 			notifications.notifyAdmin("a payment failed", err);
 			setTimeout(distributeIfReady, 300 * 1000);
 			return unlock();
@@ -98,6 +99,7 @@ async function createDistributionOutputs(distributionID, distributionSnapshotDat
 		WHERE outputs.address IS NULL \n\
 			AND distribution_id=?  \n\
 			AND payment_unit IS NULL \n\
+			AND reward_amount > 0\n\
 		ORDER BY reward_amount \n\
 		LIMIT ?", [my_address, distributionSnapshotDate, distributionID, constants.MAX_OUTPUTS_PER_PAYMENT_MESSAGE-1]);
 			if (rows.length === 0)
@@ -156,24 +158,19 @@ async function makeNextDistribution(){
 		const amount = deposited_pools_assets[key];
 		if (!validationUtils.isPositiveInteger(amount))
 			throw Error("Invalid amount: " + asset);
-		if (!valueByPoolsAssets[asset]) // if we didn't determine its value then it's not an eligible pool asset
+		if (!valueByPoolAsset[asset]) // if we didn't determine its value then it's not an eligible pool asset
 			continue;
 
 		if (!poolsAssetsValuesByAddresses[address])
 			poolsAssetsValuesByAddresses[address] = {};
-		const value = valueByPoolsAssets[asset].value * amount;
-		const weighted_value = valueByPoolsAssets[asset].weighted_value * amount;
+		const value = valueByPoolAsset[asset].value * amount;
+		const weighted_value = valueByPoolAsset[asset].weighted_value * amount;
 
 		poolsAssetsValuesByAddresses[address][asset] = {value, weighted_value, amount};
 		total_value += value;
 		total_weighted_value+= weighted_value;
 	}
-/*
-	if (total_value === 0){
-		console.log("no assets currently locked");
-		return unlock();
-	}
-*/
+
 	const conn = await db.takeConnectionFromPool();
 	await conn.query("BEGIN");
 	await conn.query("DELETE FROM per_asset_rewards WHERE distribution_id=?",[distri_id]);
@@ -183,12 +180,11 @@ async function makeNextDistribution(){
 	for (var address in poolsAssetsValuesByAddresses){
 		await conn.query("INSERT INTO rewards(distribution_id, payout_address) VALUES (?,?)",[distri_id, address]);
 		for (var asset in poolsAssetsValuesByAddresses[address]){
-			const share = poolsAssetsValuesByAddresses[address][asset].weighted_value / total_weighted_value;
-			const reward_amount = Math.round(share * conf.distribution_amount);
-			console.log("reward_amount " + reward_amount)
 			const asset_amount = poolsAssetsValuesByAddresses[address][asset].amount;
 			const asset_value = poolsAssetsValuesByAddresses[address][asset].value;
 			const asset_weighted_value = poolsAssetsValuesByAddresses[address][asset].weighted_value;
+			const share = asset_weighted_value / total_weighted_value;
+			const reward_amount = Math.round(share * conf.distribution_amount);
 			await conn.query("INSERT INTO per_asset_rewards(distribution_id, reward_id, asset, asset_amount, reward_amount,asset_value,\n\
 			asset_weighted_value) VALUES (?,(SELECT MAX(id) FROM rewards),?,?,?,?,?)",[distri_id, asset, asset_amount, reward_amount, asset_value, asset_weighted_value]);
 			await conn.query("UPDATE rewards SET distribution_share=distribution_share+?,reward_amount=reward_amount+? \n\
@@ -231,6 +227,7 @@ async function determinePoolAssetsValues(){
 		var assets_data = await (await fetch(conf.assets_data_url)).json();
 	} catch(e) {
 		console.log("error when fetching " + e.message);
+		notifications.notifyAdmin("error when fetching " + conf.assets_data_url, e.message);
 		return false;
 	}
 	try {
@@ -249,7 +246,7 @@ async function determinePoolAssetsValues(){
 			if (!asset_value)
 				throw Error("no gb value for asset " + pool_asset);
 
-			valueByPoolsAssets[pool_asset] =  {
+			valueByPoolAsset[pool_asset] =  {
 				value: asset_value,
 				weighted_value: asset_value * (eligiblePoolsByAddress[pool_address].coeff / 100)
 			};

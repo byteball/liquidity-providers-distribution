@@ -18,6 +18,7 @@ exports.webServerPort = process.env.testnet ? 4031 : 4030;
 exports.explorer_base_url = process.env.testnet ? "https://testnetexplorer.obyte.org" : "https://explorer.obyte.org";
 exports.oswap_base_url = process.env.testnet ? "https://testnet.oswap.io/#/add-liquidity/" : "https://oswap.io/#/add-liquidity/";
 exports.oswap_main_url = process.env.testnet ? "https://testnet.oswap.io" : "https://oswap.io";
+exports.wallet_uri = process.env.testnet ? "obyte-tn" : "obyte";
 
 exports.eligiblePools = process.env.testnet ? {
 	HZCD3MDGCLU2G2IVYGGTMTZXS7DII2O5: {coeff: 50}, //OUSD-GBYTE
