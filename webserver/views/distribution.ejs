@@ -42,11 +42,11 @@
 						if (distributionsRows[k].id == distributionsRows.length) {
 						%>
 						<a href="/"><button class="button mb-1 is-hidden-touch is-medium is-fullwidth <%= distributionsRows[k].id == selected_id ? 'is-primary' : '' %>" >Next distribution</button></a>
-						<a href="/"><button class="button mb-1 is-hidden-desktop is-small is-fullwidth <%= distributionsRows[k].id == selected_id ? 'is-primary' : '' %>" >Next distribution</button></a>
+						<a href="/"><button class="button mb-1 is-hidden-desktop is-small is-fullwidth <%= distributionsRows[k].id == selected_id ? 'is-primary' : '' %>" >Next</button></a>
 
 						<% } else { %>
 						<a href="<%=distributionsRows[k].id%>"><button class="button mb-1 is-hidden-touch is-medium is-fullwidth <%= distributionsRows[k].id == selected_id ? 'is-primary' : ''%>">Distribution #<%= distributionsRows[k].id %></button></a>
-						<a href="<%=distributionsRows[k].id%>"><button class="button mb-1 is-hidden-desktop is-small is-fullwidth <%= distributionsRows[k].id == selected_id ? 'is-primary' : ''%>">Distribution #<%= distributionsRows[k].id %></button></a>
+						<a href="<%=distributionsRows[k].id%>"><button class="button mb-1 is-hidden-desktop is-small is-fullwidth <%= distributionsRows[k].id == selected_id ? 'is-primary' : ''%>">#<%= distributionsRows[k].id %></button></a>
 
 					<% }
 						} %>
