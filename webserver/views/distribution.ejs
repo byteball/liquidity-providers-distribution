@@ -12,10 +12,10 @@
 				Distribution to liquidity miners
 			</h2>
 			<div class="content">
-				<p>Every <%= conf.hoursBetweenDistributions / 24 %> days, liquidity providers for <%- formatters.url(conf.oswap_main_url) %> are rewarded with bytes from undistributed funds.</p>
-				<p>To participate, one has to send the tokens from eligible pools to this Autonomous Agent: <%-formatters.address(conf.assets_locker_aa) %> 
+				<p>Every <%= conf.hoursBetweenDistributions / 24 %> days, <%= formatters.baseAmount(conf.distribution_amount, 0) %> is distributed to liquidity providers on <%- formatters.url(conf.oswap_main_url) %>.</p>
+				<p>To participate, one has to send the tokens of the eligible liquidity pools to this Autonomous Agent: <%-formatters.address(conf.assets_locker_aa) %> 
 					(<a href="<%=conf.wallet_uri +':'+conf.assets_locker_aa%>">send tokens</a>) that will lock the tokens for 7 days.</p>
-				<p>A total of <%= formatters.baseAmount(conf.distribution_amount, 0) %> is shared by all participants according to the value they have locked adjusted by a weight indicated below.</p>
+				<p>The <%= formatters.baseAmount(conf.distribution_amount, 0) %> is distributed among the liquidity providers in proportion to the value locked adjusted by the weights indicated below.</p>
 			</div>
 			<h5 class="title is-5">
 				Eligible pools (weight):
@@ -26,7 +26,7 @@
 				<span class="tag is-link is-light">
 					<a href="<%= conf.oswap_base_url + address %>" target="_blank">
 					<%= eligiblePoolsByAddress[address].asset0_info.symbol + "-" + eligiblePoolsByAddress[address].asset1_info.symbol %>
-						(<%= eligiblePoolsByAddress[address].coeff %> %)
+						(<%= eligiblePoolsByAddress[address].coeff*100 %> %)
 
 					</a>
 				</span>
@@ -56,7 +56,7 @@
 						<h5 class="title is-5">
 							<% if(selected_id == distributionsRows.length){%>
 
-								<h5 class="title is-5">	Next distribution</h5>
+								<h5 class="title is-5">	Expected amounts in the next distribution</h5>
 							<%} else {%>
 								<h5 class="title is-5">	Distribution #<%= distributionsRows[selected_id -1].id%></h5>
 							<%}%>
@@ -70,8 +70,8 @@
 							Planned on <%= distributionsRows[selected_id -1].datetime %> (GMT), realized on <%= distributionsRows[selected_id -1].snapshot_time %> (GMT)
 							<%}%>
 							</li>
-							<li>Total pools assets locked value: <%= formatters.gbAmount(distributionsRows[selected_id -1].assets_total_value) %></li>
-							<li>Total pools assets locked weighted value: <%= formatters.gbAmount(distributionsRows[selected_id -1].assets_total_weighted_value) %></li>
+							<li>Total locked value of pool assets: <%= formatters.gbAmount(distributionsRows[selected_id -1].assets_total_value) %></li>
+							<li>Total weighted locked value of pool assets: <%= formatters.gbAmount(distributionsRows[selected_id -1].assets_total_weighted_value) %></li>
 						</ul>
 						<div class="table-container">
 							<table class="table">
