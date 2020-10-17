@@ -1,6 +1,7 @@
 [
 	"autonomous agent",
 	{
+		doc_url: "https://liquidity.obyte.org/liquidity-providers-distribution.json",
 		"init": `{
 			$lock_period = 7 * 24 * 3600;
 			$registry_aa = "O6H6ZIFI57X3PLTYHOCVYPP5A553CYFQ";

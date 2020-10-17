@@ -1,0 +1,10 @@
+{
+	"version": "1.0",
+	"description": "AA for locking Oswap pool tokens in order to get a share of liquidity provider rewards.",
+	"homepage_url": "https://liquidity.obyte.org",
+	"source_url": "https://github.com/byteball/liquidity-providers-distribution",
+	"field_descriptions": {
+		"withdraw": "Asset to withdraw. Specify its asset ID or symbol.",
+		"amount": "Amount to withdraw."
+	}
+}
