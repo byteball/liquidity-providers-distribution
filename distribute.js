@@ -86,7 +86,7 @@ async function distributeIfReady(){
 }
 
 
-async function createDistributionOutputs(distributionID, distributionSnapshotDate) {
+async function createDistributionOutputs(distribution_id, distributionSnapshotDate) {
 	const rows = await db.query(
 		"SELECT reward_amount,payout_address \n\
 		FROM rewards \n\
@@ -101,7 +101,7 @@ async function createDistributionOutputs(distributionID, distributionSnapshotDat
 			AND payment_unit IS NULL \n\
 			AND reward_amount > 0\n\
 		ORDER BY reward_amount \n\
-		LIMIT ?", [my_address, distributionSnapshotDate, distributionID, constants.MAX_OUTPUTS_PER_PAYMENT_MESSAGE-1]);
+		LIMIT ?", [my_address, distributionSnapshotDate, distribution_id, constants.MAX_OUTPUTS_PER_PAYMENT_MESSAGE-1]);
 			if (rows.length === 0)
 				return null;
 			var arrOutputs = [];
@@ -143,7 +143,7 @@ async function makeNextDistribution(){
 		await db.query("INSERT INTO distributions (datetime) VALUES ((SELECT datetime(datetime, '+"+ conf.hoursBetweenDistributions + " hours')\n\
 		FROM distributions ORDER BY id DESC LIMIT 1))") // 
 
-	const distri_id = (await db.query("SELECT MAX(id) AS id FROM distributions"))[0].id;
+	const distribution_id = (await db.query("SELECT MAX(id) AS id FROM distributions"))[0].id;
 
 	const poolsAssetsValuesByAddresses = {};
 	var total_value = 0;
@@ -173,12 +173,12 @@ async function makeNextDistribution(){
 
 	const conn = await db.takeConnectionFromPool();
 	await conn.query("BEGIN");
-	await conn.query("DELETE FROM per_asset_rewards WHERE distribution_id=?",[distri_id]);
-	await conn.query("DELETE FROM rewards WHERE distribution_id=?",[distri_id]);
-	await conn.query("UPDATE distributions SET assets_total_value=?,assets_total_weighted_value=? WHERE id=?",[total_value, total_weighted_value, distri_id]);
+	await conn.query("DELETE FROM per_asset_rewards WHERE distribution_id=?", [distribution_id]);
+	await conn.query("DELETE FROM rewards WHERE distribution_id=?", [distribution_id]);
+	await conn.query("UPDATE distributions SET assets_total_value=?,assets_total_weighted_value=? WHERE id=?",[total_value, total_weighted_value, distribution_id]);
 
 	for (var address in poolsAssetsValuesByAddresses){
-		await conn.query("INSERT INTO rewards(distribution_id, payout_address) VALUES (?,?)",[distri_id, address]);
+		await conn.query("INSERT INTO rewards(distribution_id, payout_address) VALUES (?,?)", [distribution_id, address]);
 		for (var asset in poolsAssetsValuesByAddresses[address]){
 			const asset_amount = poolsAssetsValuesByAddresses[address][asset].amount;
 			const asset_value = poolsAssetsValuesByAddresses[address][asset].value;
@@ -186,13 +186,13 @@ async function makeNextDistribution(){
 			const share = asset_weighted_value / total_weighted_value;
 			const reward_amount = Math.round(share * conf.distribution_amount);
 			await conn.query("INSERT INTO per_asset_rewards(distribution_id, reward_id, asset, asset_amount, reward_amount,asset_value,\n\
-			asset_weighted_value) VALUES (?,(SELECT MAX(id) FROM rewards),?,?,?,?,?)",[distri_id, asset, asset_amount, reward_amount, asset_value, asset_weighted_value]);
+			asset_weighted_value) VALUES (?,(SELECT MAX(id) FROM rewards),?,?,?,?,?)", [distribution_id, asset, asset_amount, reward_amount, asset_value, asset_weighted_value]);
 			await conn.query("UPDATE rewards SET distribution_share=distribution_share+?,reward_amount=reward_amount+? \n\
 			WHERE id=(SELECT MAX(id) FROM rewards)",[share, reward_amount]);
 		}
 	}
 
-	await conn.query("UPDATE distributions SET snapshot_time=datetime('now') WHERE id=?", [distri_id]);
+	await conn.query("UPDATE distributions SET snapshot_time=datetime('now') WHERE id=?", [distribution_id]);
 	await conn.query("UPDATE distributions SET is_frozen=1 WHERE datetime < datetime('now')");
 	await conn.query("COMMIT");
 	conn.release();
