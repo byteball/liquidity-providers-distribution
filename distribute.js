@@ -224,7 +224,7 @@ async function getAssetInfo(asset){
 
 async function determinePoolAssetsValues(){
 	try {
-		var assets_data = await (await fetch(conf.assets_data_url)).json();
+		var trading_data = await (await fetch(conf.assets_data_url)).json();
 	} catch(e) {
 		console.log("error when fetching " + e.message);
 		notifications.notifyAdmin("error when fetching " + conf.assets_data_url, e.message);
@@ -259,9 +259,9 @@ async function determinePoolAssetsValues(){
 	return true;
 
 	function getAssetGbValue(asset){
-		for (var symbol in assets_data){
-			if (assets_data[symbol].asset_id == asset)
-				return assets_data[symbol].last_gbyte_value / (10 ** assets_data[symbol].decimals);
+		for (var symbol in trading_data){
+			if (trading_data[symbol].asset_id == asset)
+				return trading_data[symbol].last_gbyte_value / (10 ** trading_data[symbol].decimals);
 		}
 	}
 }
