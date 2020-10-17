@@ -239,7 +239,7 @@ async function determinePoolAssetsValues(){
 
 			if (!balances[asset0] || !balances[asset0].stable || !balances[asset1] || !balances[asset1].stable)
 				continue;
-			const total_pool_value = balances[asset0].stable * getAssetGbValue(asset0) + balances[asset1].stable * getAssetGbValue(asset1);
+			const total_pool_value = balances[asset0].stable * getAssetGbPrice(asset0) + balances[asset1].stable * getAssetGbPrice(asset1);
 			
 			const pool_asset_supply = await dag.readAAStateVar(pool_address, "supply");
 			const pool_asset_price = total_pool_value / pool_asset_supply;
@@ -258,7 +258,7 @@ async function determinePoolAssetsValues(){
 
 	return true;
 
-	function getAssetGbValue(asset){
+	function getAssetGbPrice(asset){
 		for (var symbol in trading_data){
 			if (trading_data[symbol].asset_id == asset)
 				return trading_data[symbol].last_gbyte_value / (10 ** trading_data[symbol].decimals);
