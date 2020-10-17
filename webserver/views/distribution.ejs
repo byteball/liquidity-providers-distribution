@@ -3,13 +3,13 @@
 	<head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<title>Distribution to liquidity miners</title>
+		<title>Distribution to liquidity providers</title>
 		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.1/css/bulma.min.css">
 	</head>
 	<body>
 		<section class="section">
 			<h2 class="title is-2">
-				Distribution to liquidity miners
+				Distribution to liquidity providers
 			</h2>
 			<div class="content">
 				<p>Every <%= conf.hoursBetweenDistributions / 24 %> days, <%= formatters.baseAmount(conf.distribution_amount, 0) %> is distributed to liquidity providers on <%- formatters.url(conf.oswap_main_url) %>.</p>
