@@ -64,7 +64,7 @@ function start(infoByPoolAsset, eligiblePoolsByAddress){
 		assetSymbol: asset => infoByPoolAsset[asset].symbol,
 		share: amount => parseFloat((amount * 100).toPrecision(3))+"%",
 		unit: unit => unit ? '<a href="'+conf.explorer_base_url+ "/#" + unit +'" target="_blank">'+unit.slice(0,8)+'...</a>' : '',
-		address: address => '<a href="'+conf.explorer_base_url+ "/#" + address +'" target="_blank">'+address+'</a>',
+		address: address => '<a class="address" href="'+conf.explorer_base_url+ "/#" + address +'" target="_blank">'+address+'</a>',
 		url: url => '<a href="'+ url +'" target="_blank">'+url+'</a>'
 
 	}
