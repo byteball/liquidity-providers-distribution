@@ -2,7 +2,7 @@
 	"name": "liquidity-providers-distribution",
 	"version": "1.0.0",
 	"description": "An Obyte bot to reward liquidity providers",
-	"main": "wcg.js",
+	"main": "distribute.js",
 	"license": "MIT",
 	"dependencies": {
 		"aabot": "git+https://github.com/byteball/aabot.git",
