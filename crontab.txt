@@ -1,0 +1,1 @@
+*/20 * * * * cd liquidity-providers-distribution; node check_daemon.js 1>>~/.config/liquidity-providers-distribution/check_daemon.log 2>>~/.config/liquidity-providers-distribution/check_daemon.err
