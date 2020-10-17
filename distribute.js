@@ -201,14 +201,14 @@ async function makeNextDistribution(){
 
 async function discoverPoolAssets(){
 	for (var pool_address in eligiblePoolsByAddress ){
-		const definition = await dag.readAADefinition(pool_address);
-		const factory_aa = definition[1].params.factory;	
+		const params = await dag.readAAParams(pool_address);
+		const factory_aa = params.factory;	
 		const pool_asset = await dag.readAAStateVar(factory_aa, "pools." + pool_address +".asset");
 		eligiblePoolsByAddress[pool_address].pool_asset = pool_asset;
-		eligiblePoolsByAddress[pool_address].asset0 = definition[1].params.asset0;
-		eligiblePoolsByAddress[pool_address].asset1 = definition[1].params.asset1;
-		eligiblePoolsByAddress[pool_address].asset0_info = await getAssetInfo(definition[1].params.asset0);
-		eligiblePoolsByAddress[pool_address].asset1_info = await getAssetInfo(definition[1].params.asset1);
+		eligiblePoolsByAddress[pool_address].asset0 = params.asset0;
+		eligiblePoolsByAddress[pool_address].asset1 = params.asset1;
+		eligiblePoolsByAddress[pool_address].asset0_info = await getAssetInfo(params.asset0);
+		eligiblePoolsByAddress[pool_address].asset1_info = await getAssetInfo(params.asset1);
 		infoByPoolAsset[pool_asset] = await getAssetInfo(pool_asset);
 	}
 }
