@@ -18,7 +18,7 @@ const webserver = require('./webserver');
 eventBus.on('headless_wallet_ready', start);
 
 const eligiblePoolsByAddress = conf.eligiblePools;
-const valueByPoolAsset = {};
+const poolAssetPrices = {};
 const infoByPoolAsset = {};
 
 var my_address;
@@ -158,13 +158,13 @@ async function makeNextDistribution(){
 		const amount = deposited_pools_assets[key];
 		if (!validationUtils.isPositiveInteger(amount))
 			throw Error("Invalid amount: " + asset);
-		if (!valueByPoolAsset[asset]) // if we didn't determine its value then it's not an eligible pool asset
+		if (!poolAssetPrices[asset]) // if we didn't determine its price then it's not an eligible pool asset
 			continue;
 
 		if (!poolsAssetsValuesByAddresses[address])
 			poolsAssetsValuesByAddresses[address] = {};
-		const value = valueByPoolAsset[asset].value * amount;
-		const weighted_value = valueByPoolAsset[asset].weighted_value * amount;
+		const value = poolAssetPrices[asset].price * amount;
+		const weighted_value = poolAssetPrices[asset].weighted_price * amount;
 
 		poolsAssetsValuesByAddresses[address][asset] = {value, weighted_value, amount};
 		total_value += value;
@@ -242,13 +242,13 @@ async function determinePoolAssetsValues(){
 			const total_pool_value = balances[asset0].stable * getAssetGbValue(asset0) + balances[asset1].stable * getAssetGbValue(asset1);
 			
 			const pool_asset_supply = await dag.readAAStateVar(pool_address, "supply");
-			const asset_value = total_pool_value / pool_asset_supply;
-			if (!asset_value)
-				throw Error("no gb value for asset " + pool_asset);
+			const pool_asset_price = total_pool_value / pool_asset_supply;
+			if (!pool_asset_price)
+				throw Error("no gb price for asset " + pool_asset);
 
-			valueByPoolAsset[pool_asset] =  {
-				value: asset_value,
-				weighted_value: asset_value * eligiblePoolsByAddress[pool_address].coeff,
+			poolAssetPrices[pool_asset] =  {
+				price: pool_asset_price,
+				weighted_price: pool_asset_price * eligiblePoolsByAddress[pool_address].coeff,
 			};
 		}
 	} catch(e) {
