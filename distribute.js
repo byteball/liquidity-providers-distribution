@@ -133,7 +133,7 @@ async function makeNextDistribution(){
 	}
 
 	try {
-		var deposited_pools_assets = await dag.readAAStateVars(conf.assets_locker_aa, "amount_");
+		var deposited_pool_assets = await dag.readAAStateVars(conf.assets_locker_aa, "amount_");
 	} catch(e){
 		console.log("couldn't read assets_locker_aa vars " + e.message);
 		return unlock();
@@ -145,28 +145,28 @@ async function makeNextDistribution(){
 
 	const distribution_id = (await db.query("SELECT MAX(id) AS id FROM distributions"))[0].id;
 
-	const poolsAssetsValuesByAddresses = {};
+	const poolAssetValuesByAddresses = {};
 	var total_value = 0;
 	var total_weighted_value = 0;
-	for (var key in deposited_pools_assets){
+	for (var key in deposited_pool_assets){
 		const address = key.split("_")[2];
 		if (!validationUtils.isValidAddress(address))
 			throw Error("Invalid address: " + address);
 		const asset = key.split("_")[1];
 		if (!validationUtils.isValidBase64(asset, constants.HASH_LENGTH))
 			throw Error("Invalid asset: " + asset);
-		const amount = deposited_pools_assets[key];
+		const amount = deposited_pool_assets[key];
 		if (!validationUtils.isPositiveInteger(amount))
 			throw Error("Invalid amount: " + asset);
 		if (!poolAssetPrices[asset]) // if we didn't determine its price then it's not an eligible pool asset
 			continue;
 
-		if (!poolsAssetsValuesByAddresses[address])
-			poolsAssetsValuesByAddresses[address] = {};
+		if (!poolAssetValuesByAddresses[address])
+			poolAssetValuesByAddresses[address] = {};
 		const value = poolAssetPrices[asset].price * amount;
 		const weighted_value = poolAssetPrices[asset].weighted_price * amount;
 
-		poolsAssetsValuesByAddresses[address][asset] = {value, weighted_value, amount};
+		poolAssetValuesByAddresses[address][asset] = {value, weighted_value, amount};
 		total_value += value;
 		total_weighted_value+= weighted_value;
 	}
@@ -177,12 +177,12 @@ async function makeNextDistribution(){
 	await conn.query("DELETE FROM rewards WHERE distribution_id=?", [distribution_id]);
 	await conn.query("UPDATE distributions SET assets_total_value=?,assets_total_weighted_value=? WHERE id=?",[total_value, total_weighted_value, distribution_id]);
 
-	for (var address in poolsAssetsValuesByAddresses){
+	for (var address in poolAssetValuesByAddresses){
 		await conn.query("INSERT INTO rewards(distribution_id, payout_address) VALUES (?,?)", [distribution_id, address]);
-		for (var asset in poolsAssetsValuesByAddresses[address]){
-			const asset_amount = poolsAssetsValuesByAddresses[address][asset].amount;
-			const asset_value = poolsAssetsValuesByAddresses[address][asset].value;
-			const asset_weighted_value = poolsAssetsValuesByAddresses[address][asset].weighted_value;
+		for (var asset in poolAssetValuesByAddresses[address]){
+			const asset_amount = poolAssetValuesByAddresses[address][asset].amount;
+			const asset_value = poolAssetValuesByAddresses[address][asset].value;
+			const asset_weighted_value = poolAssetValuesByAddresses[address][asset].weighted_value;
 			const share = asset_weighted_value / total_weighted_value;
 			const reward_amount = Math.round(share * conf.distribution_amount);
 			await conn.query("INSERT INTO per_asset_rewards(distribution_id, reward_id, asset, asset_amount, reward_amount,asset_value,\n\
