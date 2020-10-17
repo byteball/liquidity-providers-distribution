@@ -21,8 +21,8 @@ exports.oswap_main_url = process.env.testnet ? "https://testnet.oswap.io" : "htt
 exports.wallet_uri = process.env.testnet ? "obyte-tn" : "obyte";
 
 exports.eligiblePools = process.env.testnet ? {
-	HZCD3MDGCLU2G2IVYGGTMTZXS7DII2O5: {coeff: 50}, //OUSD-GBYTE
-	G6BGN6PBZEABBWJF2I42XYHVDWI3E5KT: {coeff: 100} //GRAU-OUSD
+	HZCD3MDGCLU2G2IVYGGTMTZXS7DII2O5: {coeff: 0.5}, //OUSD-GBYTE
+	G6BGN6PBZEABBWJF2I42XYHVDWI3E5KT: {coeff: 1} //GRAU-OUSD
 } : 
 {
 

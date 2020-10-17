@@ -248,7 +248,7 @@ async function determinePoolAssetsValues(){
 
 			valueByPoolAsset[pool_asset] =  {
 				value: asset_value,
-				weighted_value: asset_value * (eligiblePoolsByAddress[pool_address].coeff / 100)
+				weighted_value: asset_value * eligiblePoolsByAddress[pool_address].coeff,
 			};
 		}
 	} catch(e) {
