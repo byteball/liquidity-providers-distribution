@@ -235,11 +235,11 @@ async function determinePoolAssetsValues(){
 			const asset0 = eligiblePoolsByAddress[pool_address].asset0;
 			const asset1 = eligiblePoolsByAddress[pool_address].asset1;
 			const pool_asset = eligiblePoolsByAddress[pool_address].pool_asset;
-			const balances = await dag.readBalance(pool_address); 
+			const balances = await dag.readAABalances(pool_address); 
 
-			if (!balances[asset0] || !balances[asset0].stable || !balances[asset1] || !balances[asset1].stable)
+			if (!balances[asset0] || !balances[asset1])
 				continue;
-			const total_pool_value = balances[asset0].stable * getAssetGbPrice(asset0) + balances[asset1].stable * getAssetGbPrice(asset1);
+			const total_pool_value = balances[asset0] * getAssetGbPrice(asset0) + balances[asset1] * getAssetGbPrice(asset1);
 			
 			const pool_asset_supply = await dag.readAAStateVar(pool_address, "supply");
 			const pool_asset_price = total_pool_value / pool_asset_supply;
