@@ -22,6 +22,7 @@ const poolAssetPrices = {};
 const infoByPoolAsset = {};
 
 var my_address;
+var bPaymentFailedNotified = false;
 
 async function start(){
 	if (!conf.admin_email || !conf.from_email) {
@@ -71,12 +72,16 @@ async function distributeIfReady(){
 
 	headlessWallet.sendMultiPayment(opts, async function(err, unit) {
 		if (err) {
-			console.log()
-			notifications.notifyAdmin("a payment failed", err);
+			console.log("payment failed " + err);
+			if (!bPaymentFailedNotified){
+				notifications.notifyAdmin("a payment failed", err);
+				bPaymentFailedNotified = true;
+			}
 			setTimeout(distributeIfReady, 300 * 1000);
 			return unlock();
 
 		} else {
+			bPaymentFailedNotified = false;
 			await db.query("UPDATE rewards SET payment_unit=? WHERE payout_address IN (?) AND distribution_id=?", 
 			[unit, arrOutputs.map(o => o.address), rows[0].id]);
 			setTimeout(distributeIfReady, 30 * 1000);
