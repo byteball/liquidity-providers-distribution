@@ -75,10 +75,10 @@ describe('Check simple AA', function () {
 		expect(response.bounced).to.be.false;
 		await this.network.sync()
 		var { vars } = await this.network.deployer.readAAStateVars(this.network.agent.locker);
-		expect(vars["amount_" + this.network.asset.pool_asset_1 + "_" + alice_address]).to.be.equal(50000);
+		expect(vars["amount_" + alice_address + "_" + this.network.asset.pool_asset_1]).to.be.equal(50000);
 
 		const { unitObj } = await this.network.wallet.alice.getUnitInfo({ unit });
-		expect(vars["ts_" + this.network.asset.pool_asset_1 + "_" + alice_address]).to.be.equal(unitObj.timestamp);
+		expect(vars["ts_" + alice_address + "_" + this.network.asset.pool_asset_1]).to.be.equal(unitObj.timestamp);
 
 	}).timeout(60000)
 
@@ -105,10 +105,10 @@ describe('Check simple AA', function () {
 		expect(response.bounced).to.be.false;
 		await this.network.sync()
 		var { vars } = await this.network.deployer.readAAStateVars(this.network.agent.locker);
-		expect(vars["amount_" + this.network.asset.pool_asset_1 + "_" + alice_address]).to.be.equal(70000 + 50000);
+		expect(vars["amount_" + alice_address + "_" + this.network.asset.pool_asset_1]).to.be.equal(70000 + 50000);
 
 		const { unitObj } = await this.network.wallet.alice.getUnitInfo({ unit });
-		expect(vars["ts_" + this.network.asset.pool_asset_1 + "_" + alice_address]).to.be.equal(unitObj.timestamp);
+		expect(vars["ts_" + alice_address + "_" + this.network.asset.pool_asset_1]).to.be.equal(unitObj.timestamp);
 
 	}).timeout(60000)
 
@@ -135,11 +135,11 @@ describe('Check simple AA', function () {
 		expect(response.bounced).to.be.false;
 		await this.network.sync()
 		var { vars } = await this.network.deployer.readAAStateVars(this.network.agent.locker);
-		expect(vars["amount_" + this.network.asset.pool_asset_1 + "_" + alice_address]).to.be.equal(70000 + 50000);
-		expect(vars["amount_" + this.network.asset.pool_asset_2 + "_" + alice_address]).to.be.equal(1510000);
+		expect(vars["amount_" + alice_address + "_" + this.network.asset.pool_asset_1]).to.be.equal(70000 + 50000);
+		expect(vars["amount_" + alice_address + "_" + this.network.asset.pool_asset_2 ]).to.be.equal(1510000);
 
 		const { unitObj } = await this.network.wallet.alice.getUnitInfo({ unit });
-		expect(vars["ts_" + this.network.asset.pool_asset_2 + "_" + alice_address]).to.be.equal(unitObj.timestamp);
+		expect(vars["ts_" + alice_address + "_" +  this.network.asset.pool_asset_2]).to.be.equal(unitObj.timestamp);
 
 	}).timeout(60000)
 
@@ -165,12 +165,12 @@ describe('Check simple AA', function () {
 		expect(response.bounced).to.be.false;
 		await this.network.sync()
 		var { vars } = await this.network.deployer.readAAStateVars(this.network.agent.locker);
-		expect(vars["amount_" + this.network.asset.pool_asset_1 + "_" + alice_address]).to.be.equal(70000 + 50000);
-		expect(vars["amount_" + this.network.asset.pool_asset_2 + "_" + alice_address]).to.be.equal(1510000);
-		expect(vars["amount_" + this.network.asset.pool_asset_1 + "_" + bob_address]).to.be.equal(20000);
+		expect(vars["amount_" + alice_address + "_" +  this.network.asset.pool_asset_1]).to.be.equal(70000 + 50000);
+		expect(vars["amount_" + alice_address + "_" + this.network.asset.pool_asset_2]).to.be.equal(1510000);
+		expect(vars["amount_" + bob_address + "_" + this.network.asset.pool_asset_1]).to.be.equal(20000);
 
 		const { unitObj } = await this.network.wallet.alice.getUnitInfo({ unit });
-		expect(vars["ts_" + this.network.asset.pool_asset_1 + "_" + bob_address]).to.be.equal(unitObj.timestamp);
+		expect(vars["ts_" + bob_address + "_" + this.network.asset.pool_asset_1]).to.be.equal(unitObj.timestamp);
 
 	}).timeout(60000)
 
@@ -222,9 +222,9 @@ describe('Check simple AA', function () {
 		}])).to.be.true;
 
 		var { vars } = await this.network.deployer.readAAStateVars(this.network.agent.locker);
-		expect(vars["amount_" + this.network.asset.pool_asset_1 + "_" + alice_address]).to.be.equal(70000 + 50000 - 30000);
-		expect(vars["amount_" + this.network.asset.pool_asset_2 + "_" + alice_address]).to.be.equal(1510000);
-		expect(vars["amount_" + this.network.asset.pool_asset_1 + "_" + bob_address]).to.be.equal(20000);
+		expect(vars["amount_" + alice_address + "_" + this.network.asset.pool_asset_1]).to.be.equal(70000 + 50000 - 30000);
+		expect(vars["amount_" + alice_address  + "_" + this.network.asset.pool_asset_2]).to.be.equal(1510000);
+		expect(vars["amount_" + bob_address  + "_" + this.network.asset.pool_asset_1]).to.be.equal(20000);
 
 
 	}).timeout(60000)
@@ -256,10 +256,10 @@ describe('Check simple AA', function () {
 		}])).to.be.true;
 
 		var { vars } = await this.network.deployer.readAAStateVars(this.network.agent.locker);
-		expect(vars["amount_" + this.network.asset.pool_asset_1 + "_" + alice_address]).to.be.equal(0);
-		expect(vars["amount_" + this.network.asset.pool_asset_2 + "_" + alice_address]).to.be.equal(1510000);
-		expect(vars["amount_" + this.network.asset.pool_asset_1 + "_" + bob_address]).to.be.equal(20000);
-		expect(vars["ts_" + this.network.asset.pool_asset_1 + "_" + alice_address]).to.be.undefined;
+		expect(vars["amount_" + alice_address  + "_" + this.network.asset.pool_asset_1]).to.be.equal(0);
+		expect(vars["amount_" + alice_address  + "_" + this.network.asset.pool_asset_2]).to.be.equal(1510000);
+		expect(vars["amount_" + bob_address  + "_" + this.network.asset.pool_asset_1]).to.be.equal(20000);
+		expect(vars["ts_" + alice_address + "_" + this.network.asset.pool_asset_1]).to.be.undefined;
 
 
 	}).timeout(60000)
@@ -327,10 +327,10 @@ describe('Check simple AA', function () {
 		expect(response.bounced).to.be.false;
 		await this.network.sync()
 		var { vars } = await this.network.deployer.readAAStateVars(this.network.agent.locker);
-		expect(vars["amount_" + this.network.asset.pool_asset_1 + "_" + alice_address]).to.be.equal(60000);
+		expect(vars["amount_" + alice_address + "_" +  this.network.asset.pool_asset_1]).to.be.equal(60000);
 
 		const { unitObj } = await this.network.wallet.alice.getUnitInfo({ unit });
-		expect(vars["ts_" + this.network.asset.pool_asset_1 + "_" + alice_address]).to.be.equal(unitObj.timestamp);
+		expect(vars["ts_" + alice_address + "_" +  this.network.asset.pool_asset_1]).to.be.equal(unitObj.timestamp);
 
 	}).timeout(60000)
 

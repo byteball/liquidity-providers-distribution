@@ -36,7 +36,7 @@ async function start(){
 	await sqlite_tables.create();
 	my_address = await headlessWallet.readSingleAddress();
 	await discoverPoolAssets();
-	webserver.start(infoByPoolAsset, eligiblePoolsByAddress);
+	webserver.start(infoByPoolAsset, eligiblePoolsByAddress, poolAssetPrices);
 	loop();
 	setInterval(loop, 60 * 1000);
 }
@@ -149,10 +149,10 @@ async function makeNextDistribution(){
 	var total_value = 0;
 	var total_weighted_value = 0;
 	for (var key in deposited_pool_assets){
-		const address = key.split("_")[2];
+		const address = key.split("_")[1];
 		if (!validationUtils.isValidAddress(address))
 			throw Error("Invalid address: " + address);
-		const asset = key.split("_")[1];
+		const asset = key.split("_")[2];
 		if (!validationUtils.isValidBase64(asset, constants.HASH_LENGTH))
 			throw Error("Invalid asset: " + asset);
 		const amount = deposited_pool_assets[key];

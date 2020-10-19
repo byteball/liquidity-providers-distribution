@@ -19,10 +19,25 @@
 			<div class="content">
 				<p>Every <%= conf.hoursBetweenDistributions / 24 %> days, <%= formatters.baseAmount(conf.distribution_amount, 0) %> is distributed to liquidity providers on <%- formatters.url(conf.oswap_main_url) %>.</p>
 				<p>To participate, one has to send the tokens of the eligible liquidity pools to this Autonomous Agent: <%-formatters.address(conf.assets_locker_aa) %> 
-					(<a href="<%=conf.wallet_uri +':'+conf.assets_locker_aa%>">send tokens</a>) that will lock the tokens for 7 days.</p>
+					(<a href="<%=conf.wallet_uri +':'+conf.assets_locker_aa%>">send tokens</a>) that will lock the tokens for <%=conf.lock_period_in_days%> days.</p>
 				<p>The <%= formatters.baseAmount(conf.distribution_amount, 0) %> is distributed among the liquidity providers in proportion to the value locked adjusted by the weights indicated below.</p>
 			</div>
-			<h5 class="title is-5">
+			<div>
+				<form action="/" method="get">
+					<div class="field has-addons">
+						<div class="control">
+							<input class="input" type="text" placeholder="FPBD2TUVZTTVQECVPHT7VZDBKLZNFCNT" id="address" name="address">
+							<% if (bInvalidAddress) {%>
+								<p class="help is-danger">Invalid address</p>
+							<%}%>
+						</div>
+						<div class="control">
+								<button type="submit" class="button is-primary">address lookup</button>
+						</div>
+					</div>
+				</form>
+			</div>
+			<h5 class="title is-5 mt-5">
 				Eligible pools (weight):
 			</h5>
 
@@ -32,7 +47,6 @@
 					<a href="<%= conf.oswap_base_url + address %>" target="_blank">
 					<%= eligiblePoolsByAddress[address].asset0_info.symbol + "-" + eligiblePoolsByAddress[address].asset1_info.symbol %>
 						(<%= eligiblePoolsByAddress[address].coeff*100 %>%)
-
 					</a>
 				</span>
 

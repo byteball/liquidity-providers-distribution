@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Locked assets for address <%=address%></title>
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.1/css/bulma.min.css">
+		<style>
+		.address {
+			font-family: SFMono-Regular,Consolas,Liberation Mono,Menlo,monospace;
+		}
+		</style>
+	</head>
+	<body>
+		<section class="section">
+			<a href="/">
+				<h2 class="title is-2">
+					Distribution to liquidity providers
+				</h2>
+			</a>
+		</section>
+		<section class="section">
+			<div class="content box">
+				<h5 class="title is-5">
+					Locked assets for address <%-formatters.addressExplorer(address) %>
+				</h5>
+				<div class="table-container">
+					<table class="table">
+						<thead>
+							<tr>
+								<th>Asset</th>
+								<th>Amount</th>
+								<th>Unlockable</th>
+								<th>Value</th>
+								<th>Weighted value</th>
+								<th>Action</th>
+							</tr>
+						</thead>
+						<tbody>
+							<% for(var k=0; k<balances.length; k++) { %>
+								<tr>
+									<td><%=balances[k].asset%></td>
+									<td><%=formatters.assetAmount(balances[k].asset, balances[k].amount)%></td>
+									<td><%=balances[k].to%></td>
+									<% if(poolAssetPrices[balances[k].asset]) {%>
+									<td><%= formatters.gbAmount(poolAssetPrices[balances[k].asset].price * balances[k].amount) %> </td>
+									<%} else {%>
+										<td>Not eligible</td>
+									<%}%>
+									<% if(poolAssetPrices[balances[k].asset]) {%>
+
+									<td><%= formatters.gbAmount(poolAssetPrices[balances[k].asset].weighted_price * balances[k].amount) %> </td>
+									<%} else {%>
+										<td>Not eligible</td>
+									<%}%>
+									<td>
+										<% if (balances[k].bUnlockable) { %>
+										<a href="<%=conf.wallet_uri +':'+conf.assets_locker_aa + "?amount=10000&base64data="+
+										encodeURIComponent(btoa(JSON.stringify({withdraw: balances[k].asset})))%>">
+										<button class="button mb-1 is-small is-primary">withdraw</button>
+										</a>
+										<%}%>
+									</td>
+								</tr>
+							<%}%>
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</section>
+	</body>
+</html>

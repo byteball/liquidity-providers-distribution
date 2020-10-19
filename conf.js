@@ -7,7 +7,8 @@ exports.bIgnoreUnpairRequests = true;
 exports.hub = process.env.testnet ? 'obyte.org/bb-test' : 'obyte.org/bb';
 exports.assets_data_url = process.env.testnet ? "http://cmc.papabyte.com/api/v1/assets" : "https://data.ostable.org/api/v1/assets";
 
-exports.assets_locker_aa = "3NGO5Z7WNJMP2Q2AJ7FR5P67JNYONCGD";
+exports.assets_locker_aa = "XSNKTJ4JYQW7NFFOY4KL5XDTVO2WAHWR";
+exports.lock_period_in_days = 7;
 exports.token_registry_aa_address = process.env.testnet ? "O6H6ZIFI57X3PLTYHOCVYPP5A553CYFQ" : "O6H6ZIFI57X3PLTYHOCVYPP5A553CYFQ";
 
 exports.first_distribution_datetime = "2020-10-28 12:00:00"; //UTC

@@ -26,8 +26,8 @@
 						{
 							"app": "state",
 							"state": `{
-								var["amount_" || $received_asset || "_" || $address] += trigger.output[[asset!=base]].amount;
-								var["ts_" || $received_asset || "_" || $address] = timestamp;
+								var["amount_" || $address || "_" || $received_asset] += trigger.output[[asset!=base]].amount;
+								var["ts_" || $address || "_" || $received_asset] = timestamp;
 								response['info'] = "This asset will be locked until " || timestamp_to_string(timestamp + $lock_period);
 							}`
 						}
@@ -43,10 +43,10 @@
 							if (!$asset)
 								bounce("unknown symbol");
 						}
-						$amount_available = var["amount_" || $asset || "_" || $address];
+						$amount_available = var["amount_" || $address || "_" || $asset];
 						if (!$amount_available)
 							bounce("You don't have deposit for this asset");
-						$locktime = var["ts_" || $asset || "_" || $address];
+						$locktime = var["ts_" || $address || "_" || $asset];
 						if ($locktime AND timestamp < $locktime + $lock_period)
 							bounce("This asset is still locked, retry in " || round(($locktime + $lock_period - timestamp) / 3600) || " hours");
 						if (trigger.data.amount){
@@ -75,8 +75,8 @@
 						{
 							"app": "state",
 							"state": `{
-								var["amount_" || $asset || "_" || $address] -= $amount;
-								var["ts_" || $asset || "_" || $address] = false;
+								var["amount_" || $address || "_" || $asset] -= $amount;
+								var["ts_" || $address || "_" || $asset] = false;
 							}`
 						}
 					],

@@ -2,9 +2,11 @@ const conf = require('ocore/conf.js');
 const express = require('express')
 const path = require('path');
 const db = require('ocore/db.js');
+const validationUtils = require('ocore/validation_utils.js')
+const dag = require('aabot/dag.js');
+const moment = require('moment');
 
-
-function start(infoByPoolAsset, eligiblePoolsByAddress){
+function start(infoByPoolAsset, eligiblePoolsByAddress, poolAssetPrices){
 
 	const app = express();
 	const server = require('http').Server(app);
@@ -14,7 +16,11 @@ function start(infoByPoolAsset, eligiblePoolsByAddress){
 	app.use(express.urlencoded());
 
 	app.get('/', async (req, res) => {
-		renderForDistribution(res);
+		if (validationUtils.isValidAddress(req.query.address)){
+			renderForAddress(res, req.query.address);
+		} else {
+			renderForDistribution(res, null, !!req.query.address);
+		}
 	});
 	app.get('/:id', async (req, res) => {
 		const id = parseInt(req.params.id);
@@ -28,7 +34,7 @@ function start(infoByPoolAsset, eligiblePoolsByAddress){
 	});
 
 
-	async function renderForDistribution(res, id){
+	async function renderForDistribution(res, id, bInvalidAddress){
 
 		const distributionsRows = await db.query("SELECT id,snapshot_time,datetime,assets_total_value,assets_total_weighted_value \n\
 		FROM distributions ORDER BY id ASC");
@@ -49,12 +55,46 @@ function start(infoByPoolAsset, eligiblePoolsByAddress){
 			formatters,
 			distributionsRows,
 			selected_id,
-			eligiblePoolsByAddress
+			eligiblePoolsByAddress,
+			bInvalidAddress
 		});
 	}
 
+	async function renderForAddress(res, address){ 
+
+		const assocAmountVars = await dag.readAAStateVars(conf.assets_locker_aa, "amount_" + address);
+		const assocTsVars = await dag.readAAStateVars(conf.assets_locker_aa, "ts_" + address);
+
+		const balances = [];
+		
+
+		for (var key in assocAmountVars){
+			const amount = assocAmountVars[key];
+			const asset = key.split('_')[2];
+			const timestamp = assocTsVars[ "ts_" + address + "_" + asset] + conf.lock_period_in_days * 24 * 3600;
+			process.stdout.write("\n"+timestamp);
+
+			const to = moment().to(moment.unix(timestamp));
+			const bUnlockable = moment.unix(timestamp).isBefore();
+			balances.push({amount, asset, to, bUnlockable} )
+		}
+		res.render('address.ejs', {
+			balances,
+			conf,
+			formatters,
+			infoByPoolAsset,
+			address,
+			poolAssetPrices,
+			btoa
+		});
+
+	}
+
+
 	const formatters = {
 		assetAmount: (asset, amount) => {
+			if (!infoByPoolAsset[asset]) // foreign asset could be shown on address page
+				return amount;
 			const decimals = infoByPoolAsset[asset].decimals;
 			amount =  parseInt(amount) / (10 ** decimals)
 			return parseFloat((decimals > 0 ? (amount).toFixed(decimals) : amount)) + " " + infoByPoolAsset[asset].symbol
@@ -64,10 +104,15 @@ function start(infoByPoolAsset, eligiblePoolsByAddress){
 		assetSymbol: asset => infoByPoolAsset[asset].symbol,
 		share: amount => parseFloat((amount * 100).toPrecision(3))+"%",
 		unit: unit => unit ? '<a href="'+conf.explorer_base_url+ "/#" + unit +'" target="_blank">'+unit.slice(0,8)+'...</a>' : '',
-		address: address => '<a class="address" href="'+conf.explorer_base_url+ "/#" + address +'" target="_blank">'+address+'</a>',
-		url: url => '<a href="'+ url +'" target="_blank">'+url+'</a>'
-
+		address: address => '<a class="address" href="/?address=' + address +'" target="_blank">'+address+'</a>',
+		url: url => '<a href="'+ url +'" target="_blank">'+url+'</a>',
+		address: address => '<a class="address" href="/?address=' + address +'" target="_blank">'+address+'</a>',
+		addressExplorer: address => address ? '<a href="'+conf.explorer_base_url+ "/#" + address +'" target="_blank">'+address+'</a>' : '',
 	}
+
+	function btoa(str) {
+		return Buffer(str, 'binary').toString('base64');
+	  }
 
 }
 
