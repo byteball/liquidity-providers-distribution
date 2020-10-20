@@ -26,9 +26,12 @@
 						{
 							"app": "state",
 							"state": `{
+								if (var["amount_" || $address || "_" || $received_asset])
+									response['info'] = "All deposits for this asset will be locked until " || timestamp_to_string(timestamp + $lock_period);
+								else
+									response['info'] = "This asset will be locked until " || timestamp_to_string(timestamp + $lock_period);
 								var["amount_" || $address || "_" || $received_asset] += trigger.output[[asset!=base]].amount;
 								var["ts_" || $address || "_" || $received_asset] = timestamp;
-								response['info'] = "This asset will be locked until " || timestamp_to_string(timestamp + $lock_period);
 							}`
 						}
 					],

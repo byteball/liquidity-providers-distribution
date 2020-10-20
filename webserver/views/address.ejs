@@ -28,7 +28,6 @@
 					<table class="table">
 						<thead>
 							<tr>
-								<th>Asset</th>
 								<th>Amount</th>
 								<th>Unlockable</th>
 								<th>Value</th>
@@ -39,7 +38,6 @@
 						<tbody>
 							<% for(var k=0; k<balances.length; k++) { %>
 								<tr>
-									<td><%=balances[k].asset%></td>
 									<td><%=formatters.assetAmount(balances[k].asset, balances[k].amount)%></td>
 									<td><%=balances[k].to%></td>
 									<% if(poolAssetPrices[balances[k].asset]) {%>
@@ -54,12 +52,14 @@
 										<td>Not eligible</td>
 									<%}%>
 									<td>
-										<% if (balances[k].bUnlockable) { %>
 										<a href="<%=conf.wallet_uri +':'+conf.assets_locker_aa + "?amount=10000&base64data="+
 										encodeURIComponent(btoa(JSON.stringify({withdraw: balances[k].asset})))%>">
-										<button class="button mb-1 is-small is-primary">withdraw</button>
+										<button class="button is-small is-primary" <%= balances[k].bUnlockable ? '' : 'disabled'%>>withdraw</button>
 										</a>
-										<%}%>
+										<a href="<%=conf.wallet_uri +':'+conf.assets_locker_aa + "?asset="+
+										encodeURIComponent(balances[k].asset) %>">
+										<button class="button is-small is-primary" <%= poolAssetPrices[balances[k].asset] ? '' : 'disabled'%>>add more</button>
+										</a>
 									</td>
 								</tr>
 							<%}%>

@@ -72,8 +72,6 @@ function start(infoByPoolAsset, eligiblePoolsByAddress, poolAssetPrices){
 			const amount = assocAmountVars[key];
 			const asset = key.split('_')[2];
 			const timestamp = assocTsVars[ "ts_" + address + "_" + asset] + conf.lock_period_in_days * 24 * 3600;
-			process.stdout.write("\n"+timestamp);
-
 			const to = moment().to(moment.unix(timestamp));
 			const bUnlockable = moment.unix(timestamp).isBefore();
 			balances.push({amount, asset, to, bUnlockable} )
@@ -94,7 +92,7 @@ function start(infoByPoolAsset, eligiblePoolsByAddress, poolAssetPrices){
 	const formatters = {
 		assetAmount: (asset, amount) => {
 			if (!infoByPoolAsset[asset]) // foreign asset could be shown on address page
-				return amount;
+				return amount + " " + asset;
 			const decimals = infoByPoolAsset[asset].decimals;
 			amount =  parseInt(amount) / (10 ** decimals)
 			return parseFloat((decimals > 0 ? (amount).toFixed(decimals) : amount)) + " " + infoByPoolAsset[asset].symbol
