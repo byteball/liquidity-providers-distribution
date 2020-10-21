@@ -104,10 +104,10 @@
 								<thead>
 									<tr>
 										<th>Address</th>
-										<th>Reward</th>
 										<% if(selected_id !== distributionsRows.length){%>
 										<th>Payment unit</th>
 										<% } %>
+										<th>Reward Total</th>
 										<th>Share</th>
 										<th>Asset</th>
 										<th>Value</th>
@@ -123,12 +123,12 @@
 									%>
 										<tr>
 											<% if (j==0){%>
-											<td style="vertical-align: middle;" rowspan="<%=details.length%>"><%-formatters.address(rewardsRows[k].payout_address)%></td>
-											<td style="vertical-align: middle;" rowspan="<%=details.length%>"><%=formatters.baseAmount(rewardsRows[k].reward_amount)%></td>
-											<% if (rewardsRows[k].payment_unit){ %>
-											<td style="vertical-align: middle;" rowspan="<%=details.length%>"><%-formatters.unit(rewardsRows[k].payment_unit)%></td>
-											<% } %>
-											<td style="vertical-align: middle;" rowspan="<%=details.length%>"><%=formatters.share(rewardsRows[k].distribution_share)%></td>
+												<td style="vertical-align: middle;" rowspan="<%=details.length%>"><%-formatters.address(rewardsRows[k].payout_address)%></td>
+												<% if (rewardsRows[k].payment_unit){ %>
+													<td style="vertical-align: middle;" rowspan="<%=details.length%>"><%-formatters.unit(rewardsRows[k].payment_unit)%></td>
+												<% } %>
+												<td style="vertical-align: middle;" rowspan="<%=details.length%>"><%=formatters.baseAmount(rewardsRows[k].reward_amount)%></td>
+												<td style="vertical-align: middle;" rowspan="<%=details.length%>" title="<%=formatters.gbAmount(distributionsRows[selected_id -1].assets_total_value * rewardsRows[k].distribution_share)%>"><%=formatters.share(rewardsRows[k].distribution_share)%></td>
 											<% } %>
 											<td><%=formatters.assetAmount(details_columns[0], details_columns[1])%></td>
 											<td><%=formatters.gbAmount(details_columns[2])%></td>
