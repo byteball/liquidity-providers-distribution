@@ -99,7 +99,7 @@
 							<li>Total locked value of pool assets: <%= formatters.gbAmount(distributionsRows[selected_id -1].assets_total_value) %></li>
 							<li>Total weighted locked value of pool assets: <%= formatters.gbAmount(distributionsRows[selected_id -1].assets_total_weighted_value) %></li>
 							<% const yield = distributionsRows[selected_id -1].assets_total_value ? conf.distribution_amount / 1e9 / distributionsRows[selected_id -1].assets_total_value : 0; %>
-							<li>APY: <%= formatters.share((1 + yield) ** (365.25 / (conf.hoursBetweenDistributions / 24)) - 1) + ' yearly ('+ formatters.share(yield / (conf.hoursBetweenDistributions / 24)) +' daily)' %></li>
+							<li>Yield: <%= formatters.share((1 + yield) ** (365.25 / (conf.hoursBetweenDistributions / 24)) - 1) + ' yearly ('+ formatters.share((1 + yield) ** (1 / (conf.hoursBetweenDistributions / 24)) - 1) +' daily)' %></li>
 						</ul>
 						<div class="table-container">
 							<table class="table">
