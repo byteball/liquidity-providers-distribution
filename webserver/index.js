@@ -105,7 +105,7 @@ function start(infoByPoolAsset, eligiblePoolsByAddress, poolAssetPrices){
 		address: address => '<a class="address" href="/?address=' + address +'" target="_blank">'+address+'</a>',
 		url: url => '<a href="'+ url +'" target="_blank">'+url+'</a>',
 		address: address => '<a class="address" href="/?address=' + address +'" target="_blank">'+address+'</a>',
-		addressExplorer: address => address ? '<a href="'+conf.explorer_base_url+ "/#" + address +'" target="_blank">'+address+'</a>' : '',
+		explorer: (addresOrUnit, name) => addresOrUnit ? '<a class="address" href="'+conf.explorer_base_url+ "/#" + addresOrUnit +'" target="_blank">'+ (name ? name : addresOrUnit)+'</a>' : '',
 	}
 
 	function btoa(str) {

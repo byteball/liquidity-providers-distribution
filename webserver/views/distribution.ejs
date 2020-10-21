@@ -38,7 +38,7 @@
 		</div>
 			<div class="content">
 				<p>Every <%= conf.hoursBetweenDistributions / 24 %> days, <%= formatters.baseAmount(conf.distribution_amount, 0) %> is distributed to liquidity providers on <%- formatters.url(conf.oswap_main_url) %>.</p>
-				<p>To participate, one has to send the tokens of the eligible liquidity pools to this Autonomous Agent: <%-formatters.addressExplorer(conf.assets_locker_aa) %> 
+				<p>To participate, one has to send the tokens of the eligible liquidity pools to this Autonomous Agent: <%-formatters.explorer(conf.assets_locker_aa) %> 
 					(<a href="<%=conf.wallet_uri +':'+conf.assets_locker_aa%>?single_address=1">send tokens</a>) that will lock the tokens for <%=conf.lock_period_in_days%> days.</p>
 				<p>The <%= formatters.baseAmount(conf.distribution_amount, 0) %> is distributed among the liquidity providers in proportion to the value locked adjusted by the weights indicated below.</p>
 			</div>
@@ -98,15 +98,13 @@
 							</li>
 							<li>Total locked value of pool assets: <%= formatters.gbAmount(distributionsRows[selected_id -1].assets_total_value) %></li>
 							<li>Total weighted locked value of pool assets: <%= formatters.gbAmount(distributionsRows[selected_id -1].assets_total_weighted_value) %></li>
+							<li>Yeild: <%= distributionsRows[selected_id -1].assets_total_value ? formatters.share(conf.distribution_amount/1e9/distributionsRows[selected_id -1].assets_total_value) : 'N/A' %> for every <%= conf.hoursBetweenDistributions / 24 %> days</li>
 						</ul>
 						<div class="table-container">
 							<table class="table">
 								<thead>
 									<tr>
 										<th>Address</th>
-										<% if(selected_id !== distributionsRows.length){%>
-										<th>Payment unit</th>
-										<% } %>
 										<th>Reward Total</th>
 										<th>Share</th>
 										<th>Asset</th>
@@ -124,10 +122,7 @@
 										<tr>
 											<% if (j==0){%>
 												<td style="vertical-align: middle;" rowspan="<%=details.length%>"><%-formatters.address(rewardsRows[k].payout_address)%></td>
-												<% if (rewardsRows[k].payment_unit){ %>
-													<td style="vertical-align: middle;" rowspan="<%=details.length%>"><%-formatters.unit(rewardsRows[k].payment_unit)%></td>
-												<% } %>
-												<td style="vertical-align: middle;" rowspan="<%=details.length%>"><%=formatters.baseAmount(rewardsRows[k].reward_amount)%></td>
+												<td style="vertical-align: middle;" rowspan="<%=details.length%>"><%= rewardsRows[k].payment_unit ? formatters.explorer(rewardsRows[k].payment_unit, formatters.baseAmount(rewardsRows[k].reward_amount)) : formatters.baseAmount(rewardsRows[k].reward_amount) %></td>
 												<td style="vertical-align: middle;" rowspan="<%=details.length%>" title="<%=formatters.gbAmount(distributionsRows[selected_id -1].assets_total_value * rewardsRows[k].distribution_share)%>"><%=formatters.share(rewardsRows[k].distribution_share)%></td>
 											<% } %>
 											<td><%=formatters.assetAmount(details_columns[0], details_columns[1])%></td>
