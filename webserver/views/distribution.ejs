@@ -39,7 +39,7 @@
 			<div class="content">
 				<p>Every <%= conf.hoursBetweenDistributions / 24 %> days, <%= formatters.baseAmount(conf.distribution_amount, 0) %> is distributed to liquidity providers on <%- formatters.url(conf.oswap_main_url) %>.</p>
 				<p>To participate, one has to send the tokens of the eligible liquidity pools to this Autonomous Agent: <%-formatters.addressExplorer(conf.assets_locker_aa) %> 
-					(<a href="<%=conf.wallet_uri +':'+conf.assets_locker_aa%>">send tokens</a>) that will lock the tokens for <%=conf.lock_period_in_days%> days.</p>
+					(<a href="<%=conf.wallet_uri +':'+conf.assets_locker_aa%>?single_address=1">send tokens</a>) that will lock the tokens for <%=conf.lock_period_in_days%> days.</p>
 				<p>The <%= formatters.baseAmount(conf.distribution_amount, 0) %> is distributed among the liquidity providers in proportion to the value locked adjusted by the weights indicated below.</p>
 			</div>
 

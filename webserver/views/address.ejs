@@ -52,11 +52,11 @@
 										<td>Not eligible</td>
 									<%}%>
 									<td>
-										<a href="<%=conf.wallet_uri +':'+conf.assets_locker_aa + "?amount=10000&base64data="+
+										<a href="<%=conf.wallet_uri +':'+conf.assets_locker_aa + "?from_address="+ address +"&amount=10000&base64data="+
 										encodeURIComponent(btoa(JSON.stringify({withdraw: balances[k].asset})))%>">
 										<button class="button is-small is-primary" <%= balances[k].bUnlockable ? '' : 'disabled'%>>withdraw</button>
 										</a>
-										<a href="<%=conf.wallet_uri +':'+conf.assets_locker_aa + "?asset="+
+										<a href="<%=conf.wallet_uri +':'+conf.assets_locker_aa + "?from_address="+ address +"&asset="+
 										encodeURIComponent(balances[k].asset) %>">
 										<button class="button is-small is-primary" <%= poolAssetPrices[balances[k].asset] ? '' : 'disabled'%>>add more</button>
 										</a>
