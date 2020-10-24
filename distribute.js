@@ -161,8 +161,10 @@ async function makeNextDistribution(){
 		if (!validationUtils.isValidBase64(asset, constants.HASH_LENGTH))
 			throw Error("Invalid asset: " + asset);
 		const amount = deposited_pool_assets[key];
-		if (!validationUtils.isPositiveInteger(amount))
-			throw Error("Invalid amount: " + asset);
+		if (!validationUtils.isNonnegativeInteger(amount))
+			throw Error("Invalid amount: " + amount);
+		if (!validationUtils.isPositiveInteger(amount)) // skip zero
+			continue;
 		if (!poolAssetPrices[asset]) // if we didn't determine its price then it's not an eligible pool asset
 			continue;
 
