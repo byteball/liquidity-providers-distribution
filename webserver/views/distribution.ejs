@@ -134,7 +134,7 @@
 										<tr>
 											<% if (j==0){%>
 												<td style="vertical-align: middle;" rowspan="<%=details.length%>"><%-formatters.address(rewardsRows[k].payout_address)%></td>
-												<td style="vertical-align: middle;" rowspan="<%=details.length%>"><%= rewardsRows[k].payment_unit ? formatters.explorer(rewardsRows[k].payment_unit, formatters.baseAmount(rewardsRows[k].reward_amount)) : formatters.baseAmount(rewardsRows[k].reward_amount) %></td>
+												<td style="vertical-align: middle;" rowspan="<%=details.length%>"><%- rewardsRows[k].payment_unit ? formatters.explorer(rewardsRows[k].payment_unit, formatters.baseAmount(rewardsRows[k].reward_amount)) : formatters.baseAmount(rewardsRows[k].reward_amount) %></td>
 												<td style="vertical-align: middle;" rowspan="<%=details.length%>" title="<%=formatters.gbAmount(distributionsRows[selected_id -1].assets_total_value * rewardsRows[k].distribution_share)%>"><%=formatters.share(rewardsRows[k].distribution_share)%></td>
 											<% } %>
 											<td><%=formatters.assetAmount(details_columns[0], details_columns[1])%></td>
