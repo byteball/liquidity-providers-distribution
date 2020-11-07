@@ -3,7 +3,20 @@
 	<head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<title>Distribution to liquidity providers</title>
+		<%
+			const weekly_yield = conf.distribution_amount / 1e9 / distributionsRows[distributionsRows.length -1].assets_total_value;
+			const apy = (1 + weekly_yield) ** (365.25 / (conf.hoursBetweenDistributions / 24)) - 1;
+			const apy_percent = formatters.share(apy);
+		%>
+		<title>Distribution to liquidity providers, <%= apy_percent %> APY</title>
+		<meta name="description" content="Liquidity mining with Obyte: get rewarded for providing liquidity, <%= apy_percent %> APY." />
+		<meta property="og:description" content="Liquidity mining with Obyte: get rewarded for providing liquidity, <%= apy_percent %> APY." />
+		<meta property="og:title" content="Distribution to liquidity providers, <%= apy_percent %> APY.">
+		<meta property="og:type" content="website" />
+		<meta property="og:image" content="/logo.png">
+		<link rel="apple-touch-icon" href="/logo.png" />
+		<link rel="icon" href="/favicon.ico" />
+		<link rel="manifest" href="/manifest.json" />
 		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.1/css/bulma.min.css">
 		<style>
 		.address {
