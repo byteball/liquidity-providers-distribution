@@ -103,7 +103,7 @@ function start(infoByPoolAsset, eligiblePoolsByAddress, poolAssetPrices){
 		share: amount => parseFloat((amount * 100).toPrecision(3))+"%",
 		unit: unit => unit ? '<a href="'+conf.explorer_base_url+ "/#" + unit +'" target="_blank">'+unit.slice(0,8)+'...</a>' : '',
 		address: address => '<a class="address" href="/?address=' + address +'" target="_blank">'+address+'</a>',
-		url: url => '<a href="'+ url +'" target="_blank">'+url+'</a>',
+		url: url => '<a href="'+ url +'" target="_blank">'+url.replace(/^https?:\/\//, '')+'</a>',
 		explorer: (addressOrUnit, name) => addressOrUnit ? '<a class="address" href="'+conf.explorer_base_url+ "/#" + addressOrUnit +'" target="_blank">'+ (name ? name : addressOrUnit)+'</a>' : '',
 	}
 
