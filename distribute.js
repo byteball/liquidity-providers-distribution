@@ -124,6 +124,8 @@ async function createDistributionOutputs(distribution_id, distributionSnapshotDa
 async function makeNextDistribution(){
 
 	const unlock = await mutex.lockOrSkip(['make']);
+	if (!unlock)
+		return;
 
 	const rows = await db.query("SELECT is_frozen, is_completed,id FROM distributions ORDER BY id DESC LIMIT 1");
 	if (rows[0].is_frozen && !rows[0].is_completed){
