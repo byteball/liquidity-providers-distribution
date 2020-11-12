@@ -19,14 +19,14 @@ function start(infoByPoolAsset, eligiblePoolsByAddress, poolAssetPrices){
 		if (validationUtils.isValidAddress(req.query.address)){
 			renderForAddress(res, req.query.address);
 		} else {
-			renderForDistribution(res, null, !!req.query.address, req.query.ref);
+			renderForDistribution(res, null, !!req.query.address, req.query.r);
 		}
 	});
 	app.get('/:id', async (req, res) => {
 		const id = parseInt(req.params.id);
 		if (!id)
 			return res.status(400).send('invalid distribution id');
-		renderForDistribution(res, id, false, req.query.ref);
+		renderForDistribution(res, id, false, req.query.r);
 	});
 
 	server.listen(conf.webServerPort, () => {
