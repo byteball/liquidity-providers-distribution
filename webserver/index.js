@@ -19,14 +19,14 @@ function start(infoByPoolAsset, eligiblePoolsByAddress, poolAssetPrices){
 		if (validationUtils.isValidAddress(req.query.address)){
 			renderForAddress(res, req.query.address);
 		} else {
-			renderForDistribution(res, null, !!req.query.address);
+			renderForDistribution(res, null, !!req.query.address, req.query.ref);
 		}
 	});
 	app.get('/:id', async (req, res) => {
 		const id = parseInt(req.params.id);
 		if (!id)
 			return res.status(400).send('invalid distribution id');
-		renderForDistribution(res, id);
+		renderForDistribution(res, id, false, req.query.ref);
 	});
 
 	server.listen(conf.webServerPort, () => {
@@ -34,7 +34,7 @@ function start(infoByPoolAsset, eligiblePoolsByAddress, poolAssetPrices){
 	});
 
 
-	async function renderForDistribution(res, id, bInvalidAddress){
+	async function renderForDistribution(res, id, bInvalidAddress, ref){
 
 		const distributionsRows = await db.query("SELECT id,snapshot_time,datetime,assets_total_value,assets_total_weighted_value \n\
 		FROM distributions ORDER BY id ASC");
@@ -56,7 +56,8 @@ function start(infoByPoolAsset, eligiblePoolsByAddress, poolAssetPrices){
 			distributionsRows,
 			selected_id,
 			eligiblePoolsByAddress,
-			bInvalidAddress
+			bInvalidAddress,
+			ref,
 		});
 	}
 
