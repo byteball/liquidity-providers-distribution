@@ -233,7 +233,9 @@ async function getAssetInfo(asset){
 
 async function determinePoolAssetsValues(){
 	try {
+		console.log('requesting trading data');
 		var trading_data = await (await fetch(conf.assets_data_url)).json();
+		console.log('got trading data', trading_data);
 	} catch(e) {
 		console.log("error when fetching " + e.message);
 		notifications.notifyAdmin("error when fetching " + conf.assets_data_url, e.message);
