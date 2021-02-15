@@ -125,7 +125,7 @@
 							Planned on <%= distributionsRows[selected_id -1].datetime %> (GMT), realized on <%= distributionsRows[selected_id -1].snapshot_time %> (GMT)
 							<%}%>
 							</li>
-							<li>Total locked value of pool assets: <%= formatters.gbAmount(distributionsRows[selected_id -1].assets_total_value) %></li>
+							<li>Total locked value of pool assets: <%= formatters.gbAmount(distributionsRows[selected_id -1].assets_total_value) %><%= usdPrice[0] ? ' ('+ formatters.usdAmount(distributionsRows[selected_id -1].assets_total_value*usdPrice[0].price) +')' : '' %></li>
 							<li>Total weighted locked value of pool assets: <%= formatters.gbAmount(distributionsRows[selected_id -1].assets_total_weighted_value) %></li>
 							<% const yield = distributionsRows[selected_id -1].assets_total_value ? conf.distribution_amount / 1e9 / distributionsRows[selected_id -1].assets_total_value : 0; %>
 							<li>Yield: <%= formatters.share((1 + yield) ** (365.25 / (conf.hoursBetweenDistributions / 24)) - 1) + ' yearly (compounded), '+ formatters.share(yield) +' weekly' %></li>

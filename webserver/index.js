@@ -4,7 +4,9 @@ const path = require('path');
 const db = require('ocore/db.js');
 const validationUtils = require('ocore/validation_utils.js')
 const dag = require('aabot/dag.js');
+const fetch = require('node-fetch');
 const moment = require('moment');
+const usdPrices = [];
 
 function start(infoByPoolAsset, eligiblePoolsByAddress, poolAssetPrices){
 
@@ -49,6 +51,21 @@ function start(infoByPoolAsset, eligiblePoolsByAddress, poolAssetPrices){
 		if (!distributionsRows.map(d => d.id).includes(selected_id))
 			return res.status(400).send('invalid distribution id');
 
+		var usdPrice = 0;
+		var priceTimestamp = moment(distributionsRows[selected_id-1].snapshot_time).unix();
+
+		if (usdPrices[priceTimestamp] && usdPrices[priceTimestamp][0]) {
+			usdPrice = usdPrices[priceTimestamp];
+		}
+		else {
+			try {
+				usdPrice = usdPrices[priceTimestamp] = await (await fetch('https://api.coinpaprika.com/v1/tickers/gbyte-obyte/historical?quote=usd&start='+ priceTimestamp +'&limit=1')).json();
+			}
+			catch (ex) {
+				console.error(ex.message);
+			}
+		}
+
 		res.render('distribution.ejs', {
 			rewardsRows,
 			conf,
@@ -58,6 +75,7 @@ function start(infoByPoolAsset, eligiblePoolsByAddress, poolAssetPrices){
 			eligiblePoolsByAddress,
 			bInvalidAddress,
 			ref,
+			usdPrice,
 		});
 	}
 
@@ -99,6 +117,7 @@ function start(infoByPoolAsset, eligiblePoolsByAddress, poolAssetPrices){
 			return parseFloat((decimals > 0 ? (amount).toFixed(decimals) : amount)) + " " + infoByPoolAsset[asset].symbol
 		},
 		gbAmount: amount => parseFloat(parseFloat(amount).toFixed(6)) + " GB",
+		usdAmount: amount => parseFloat(parseFloat(amount).toFixed(2)) + " USD",
 		baseAmount: (amount, decimals) => parseFloat((parseInt(amount) / 1e9).toFixed(typeof decimals == "number" ? decimals : 6)) + " GB",
 		assetSymbol: asset => infoByPoolAsset[asset].symbol,
 		share: amount => parseFloat((amount * 100).toPrecision(3))+"%",
