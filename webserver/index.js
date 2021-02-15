@@ -38,7 +38,7 @@ function start(infoByPoolAsset, eligiblePoolsByAddress, poolAssetPrices){
 
 	async function renderForDistribution(res, id, bInvalidAddress, ref){
 
-		const distributionsRows = await db.query("SELECT id,snapshot_time,datetime,assets_total_value,assets_total_weighted_value \n\
+		const distributionsRows = await db.query("SELECT id,is_completed,snapshot_time,datetime,assets_total_value,assets_total_weighted_value \n\
 		FROM distributions ORDER BY id ASC");
 		const selected_id = id || distributionsRows.length; // first id is 1
 
@@ -53,6 +53,8 @@ function start(infoByPoolAsset, eligiblePoolsByAddress, poolAssetPrices){
 
 		var usdPrice = 0;
 		var priceTimestamp = moment(distributionsRows[selected_id-1].snapshot_time).unix();
+		 // rewind priceTimestamp 6 minutes for ongoing distribution
+		priceTimestamp = distributionsRows[selected_id-1].is_completed ? priceTimestamp : priceTimestamp-360;
 
 		if (usdPrices[priceTimestamp] && usdPrices[priceTimestamp][0]) {
 			usdPrice = usdPrices[priceTimestamp];
