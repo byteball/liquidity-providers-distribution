@@ -5,7 +5,7 @@ exports.bSingleAddress = true;
 
 exports.bIgnoreUnpairRequests = true;
 exports.hub = process.env.testnet ? 'obyte.org/bb-test' : 'obyte.org/bb';
-exports.assets_data_url = process.env.testnet ? "http://cmc.papabyte.com/api/v1/assets" : "https://data.ostable.org/api/v1/assets";
+exports.assets_data_url = process.env.testnet ? "https://testnet-data.ostable.org/api/v1/assets" : "https://data.ostable.org/api/v1/assets";
 
 exports.assets_locker_aa = "7AUBFK4YAUGUF3RWWYRFXXF7BBWY2V7Y";
 exports.lock_period_in_days = 7;
@@ -28,22 +28,21 @@ exports.eligiblePools = process.env.testnet ?
 	}
 	:
 	{
-		/*
-		AR3SHS7SFH3PF6ZM6UIF7HWIV44TZ46H: { coeff: 1 }, // IUSD-OUSD
-		O4PXOZZ655Q53PDYLKW3GYN22U4RKO5R: { coeff: 1 }, // IBIT-OBIT
-		YGOUPTI7UXYPNUNWW3SSD4H7SWN5D6SN: { coeff: 1 }, // IAU-OAU
-		L553WBVMGVOGK2CFPHDF4XJR74JBYHQG: { coeff: 1 }, // IGB-OGB
+		AR3SHS7SFH3PF6ZM6UIF7HWIV44TZ46H: { coeff: 0 }, // IUSD-OUSD
+		O4PXOZZ655Q53PDYLKW3GYN22U4RKO5R: { coeff: 0 }, // IBIT-OBIT
+		YGOUPTI7UXYPNUNWW3SSD4H7SWN5D6SN: { coeff: 0 }, // IAU-OAU
+		L553WBVMGVOGK2CFPHDF4XJR74JBYHQG: { coeff: 0 }, // IGB-OGB
 
-		WGXHCMIBZRYHDHQPR253UTRPMEGDQDDY: { coeff: 1 }, // GBYTE-OUSD
-		VI7TK23R2QHFRFRQSLO2QZQEWMEGMMLF: { coeff: 1 }, // GBYTE-OBIT
-		NKWC7MJO366YB3VNW33A4EQFUZCAE7WC: { coeff: 1 }, // GBYTE-OGB
+		WGXHCMIBZRYHDHQPR253UTRPMEGDQDDY: { coeff: 0 }, // GBYTE-OUSD
+		VI7TK23R2QHFRFRQSLO2QZQEWMEGMMLF: { coeff: 0 }, // GBYTE-OBIT
+		NKWC7MJO366YB3VNW33A4EQFUZCAE7WC: { coeff: 0 }, // GBYTE-OGB
 
-		QFIBPWBW6ADYSIZPTJ2FAHNARLHPGAN4: { coeff: 1 }, // OBIT-OUSD
-		C3XRJVE5RGJLTZ2V3K3NLS2IY5RIQPRI: { coeff: 1 }, // OAU-OUSD
+		QFIBPWBW6ADYSIZPTJ2FAHNARLHPGAN4: { coeff: 0 }, // OBIT-OUSD
+		C3XRJVE5RGJLTZ2V3K3NLS2IY5RIQPRI: { coeff: 0 }, // OAU-OUSD
 
-		'5V3DVQ7LTONTE7XN5U7NL7Q625CYD2RV': { coeff: 1 }, // GBYTE-OETH
-		A6BRE6PSZC3W5RDIKU6KSF6FLP3UYKCZ: { coeff: 1 }, // ITH-OETH
-		*/
+		'5V3DVQ7LTONTE7XN5U7NL7Q625CYD2RV': { coeff: 0 }, // GBYTE-OETH
+		A6BRE6PSZC3W5RDIKU6KSF6FLP3UYKCZ: { coeff: 0 }, // ITH-OETH
+
 		FU3CNEGHP23BJNX5CVJ2TKNGOSBEARE5: { coeff: 1 }, // OUSDV2-OBITV2
 		IX3BHPN433VVJCBZKT4UBSDGFSRW4TD5: { coeff: 1 }, // OUSDV2-OETHV2
 		NG6WS5CJ6WSG2GRZLWZQ2RBI5WQH7WKO: { coeff: 1 }, // OETHV2-OBITV2
