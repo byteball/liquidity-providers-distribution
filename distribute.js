@@ -24,6 +24,11 @@ const infoByPoolAsset = {};
 var my_address;
 var bPaymentFailedNotified = false;
 
+Object.filter = (obj, predicate) => 
+    Object.keys(obj)
+          .filter( key => predicate(obj[key]) )
+          .reduce( (res, key) => (res[key] = obj[key], res), {} );
+
 async function start(){
 	if (!conf.admin_email || !conf.from_email) {
 		console.log("please specify admin_email and from_email in your " + desktopApp.getAppDataDir() + "/conf.json");
@@ -37,7 +42,7 @@ async function start(){
 	await sqlite_tables.create();
 	my_address = await headlessWallet.readSingleAddress();
 	await discoverPoolAssets();
-	webserver.start(infoByPoolAsset, eligiblePoolsByAddress, poolAssetPrices);
+	webserver.start(infoByPoolAsset, Object.filter(eligiblePoolsByAddress, data => data.coeff), poolAssetPrices);
 	loop();
 	setInterval(loop, 60 * 1000);
 }
@@ -243,6 +248,9 @@ async function determinePoolAssetsValues(){
 	}
 	try {
 		for (var pool_address in eligiblePoolsByAddress){
+			if (!eligiblePoolsByAddress[pool_address].coeff)
+				continue;
+
 			const asset0 = eligiblePoolsByAddress[pool_address].asset0;
 			const asset1 = eligiblePoolsByAddress[pool_address].asset1;
 			const pool_asset = eligiblePoolsByAddress[pool_address].pool_asset;
