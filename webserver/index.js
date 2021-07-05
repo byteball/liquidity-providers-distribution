@@ -114,7 +114,7 @@ function start(infoByPoolAsset, eligiblePoolsByAddress, poolAssetPrices){
 		assetAmount: (asset, amount) => {
 			if (!infoByPoolAsset[asset]) // foreign asset could be shown on address page
 				return amount + " " + asset;
-			const decimals = infoByPoolAsset[asset].decimals;
+			const decimals = infoByPoolAsset[asset].decimals || 0;
 			amount =  parseInt(amount) / (10 ** decimals)
 			return parseFloat((decimals > 0 ? (amount).toFixed(decimals) : amount)) + " " + infoByPoolAsset[asset].symbol
 		},
@@ -130,7 +130,7 @@ function start(infoByPoolAsset, eligiblePoolsByAddress, poolAssetPrices){
 	}
 
 	function btoa(str) {
-		return Buffer(str, 'binary').toString('base64');
+		return Buffer.from(str, 'binary').toString('base64');
 	  }
 
 }

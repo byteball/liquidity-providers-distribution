@@ -14,6 +14,7 @@ const dag = require('aabot/dag.js');
 const fetch = require('node-fetch');
 const sqlite_tables = require('./sqlite_tables.js');
 const webserver = require('./webserver');
+const network = require('ocore/network.js');
 
 eventBus.on('headless_wallet_ready', start);
 
@@ -147,7 +148,7 @@ async function makeNextDistribution(){
 	try {
 		var deposited_pool_assets = await dag.readAAStateVars(conf.assets_locker_aa, "amount_");
 	} catch(e){
-		console.log("couldn't read assets_locker_aa vars " + e.message);
+		console.error("couldn't read assets_locker_aa vars", e.message);
 		return unlock();
 	}
 
@@ -231,19 +232,14 @@ async function getAssetInfo(asset){
 	if (asset == 'base')
 		return {symbol: 'GBYTE', decimals: 9};
 	const symbol = await dag.readAAStateVar(conf.token_registry_aa_address, "a2s_" + asset);
-	const desc_hash = await dag.readAAStateVar(conf.token_registry_aa_address, "current_desc_" + asset);
-	const decimals = await dag.readAAStateVar(conf.token_registry_aa_address, "decimals_" + desc_hash);
-	return {symbol, decimals};
+	// const desc_hash = await dag.readAAStateVar(conf.token_registry_aa_address, "current_desc_" + asset);
+	// const decimals = await dag.readAAStateVar(conf.token_registry_aa_address, "decimals_" + desc_hash);
+	return {symbol, decimals: null};
 }
 
 async function determinePoolAssetsValues(){
-	try {
-		console.log('requesting trading data');
-		var trading_data = await (await fetch(conf.assets_data_url)).json();
-		console.log('got trading data', trading_data);
-	} catch(e) {
-		console.log("error when fetching " + e.message);
-		notifications.notifyAdmin("error when fetching " + conf.assets_data_url, e.message);
+	if (!network.exchangeRates['GBYTE_USD']) {
+		console.error('GBYTE_USD price missing');
 		return false;
 	}
 	try {
@@ -251,17 +247,8 @@ async function determinePoolAssetsValues(){
 			if (!eligiblePoolsByAddress[pool_address].coeff)
 				continue;
 
-			const asset0 = eligiblePoolsByAddress[pool_address].asset0;
-			const asset1 = eligiblePoolsByAddress[pool_address].asset1;
 			const pool_asset = eligiblePoolsByAddress[pool_address].pool_asset;
-			const balances = await dag.readAABalances(pool_address); 
-
-			if (!balances[asset0] || !balances[asset1])
-				continue;
-			const total_pool_value = balances[asset0] * getAssetGbPrice(asset0) + balances[asset1] * getAssetGbPrice(asset1);
-			
-			const pool_asset_supply = await dag.readAAStateVar(pool_address, "supply");
-			const pool_asset_price = total_pool_value / pool_asset_supply;
+			const pool_asset_price = getAssetGbPrice(pool_asset);
 			if (!pool_asset_price)
 				throw Error("no gb price for asset " + pool_asset);
 
@@ -271,17 +258,16 @@ async function determinePoolAssetsValues(){
 			};
 		}
 	} catch(e) {
-		console.log("error " + e.message);
+		console.error("error", e.message);
 		return false;
 	}
 
 	return true;
 
 	function getAssetGbPrice(asset){
-		for (var symbol in trading_data){
-			if (trading_data[symbol].asset_id == asset)
-				return trading_data[symbol].last_gbyte_value / (10 ** trading_data[symbol].decimals);
-		}
+		if (network.exchangeRates[asset + '_USD'])
+			return network.exchangeRates[asset + '_USD'] / network.exchangeRates['GBYTE_USD'];
+		return 0;
 	}
 }
 
