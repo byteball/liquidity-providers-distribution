@@ -226,6 +226,16 @@ async function discoverPoolAssets(){
 		eligiblePoolsByAddress[pool_address].y_asset_info = await getAssetInfo(y_asset);
 		infoByPoolAsset[pool_asset] = await getAssetInfo(pool_asset);
 	}
+
+	// get info about v1 pool assets for displaying old distributions
+	const v1FactoryVars = await dag.readAAStateVars(conf.oswap_v1_factory, "pools.");
+	for (let var_name in v1FactoryVars) {
+		const [prefix, pool_address, key] = var_name.split('.');
+		if (key === 'asset') {
+			const pool_asset = v1FactoryVars[var_name];
+			infoByPoolAsset[pool_asset] = await getAssetInfo(pool_asset);
+		}		
+	}
 }
 
 async function getAssetInfo(asset){

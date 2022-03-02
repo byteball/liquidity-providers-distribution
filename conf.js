@@ -8,7 +8,8 @@ exports.hub = process.env.testnet ? 'obyte.org/bb-test' : 'obyte.org/bb';
 
 exports.assets_locker_aa = "7AUBFK4YAUGUF3RWWYRFXXF7BBWY2V7Y";
 exports.lock_period_in_days = 7;
-exports.token_registry_aa_address = process.env.testnet ? "O6H6ZIFI57X3PLTYHOCVYPP5A553CYFQ" : "O6H6ZIFI57X3PLTYHOCVYPP5A553CYFQ";
+exports.token_registry_aa_address = "O6H6ZIFI57X3PLTYHOCVYPP5A553CYFQ";
+exports.oswap_v1_factory = "B22543LKSS35Z55ROU4GDN26RT6MDKWU";
 
 exports.first_distribution_datetime = "2020-10-28 12:00:00"; //UTC
 exports.hoursBetweenDistributions = process.env.testnet ? 2 : 7 * 24;
