@@ -80,7 +80,7 @@
 			<% for (var address in eligiblePoolsByAddress) { %>
 				<span class="tag is-link is-light">
 					<a href="<%= conf.oswap_base_url + address %>" target="_blank">
-					<%= eligiblePoolsByAddress[address].asset0_info.symbol + "-" + eligiblePoolsByAddress[address].asset1_info.symbol %>
+					<%= eligiblePoolsByAddress[address].x_asset_info.symbol + "-" + eligiblePoolsByAddress[address].y_asset_info.symbol %>
 						(<%= eligiblePoolsByAddress[address].coeff*100 %>%)
 					</a>
 				</span>

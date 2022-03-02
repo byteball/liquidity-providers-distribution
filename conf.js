@@ -16,8 +16,8 @@ exports.distribution_amount = process.env.testnet ? 1e9 : 100e9; // in bytes
 
 exports.webServerPort = process.env.testnet ? 4031 : 4030;
 exports.explorer_base_url = process.env.testnet ? "https://testnetexplorer.obyte.org" : "https://explorer.obyte.org";
-exports.oswap_base_url = process.env.testnet ? "https://testnet.oswap.io/#/add-liquidity/" : "https://oswap.io/#/add-liquidity/";
-exports.oswap_main_url = process.env.testnet ? "https://testnet.oswap.io" : "https://oswap.io";
+exports.oswap_base_url = process.env.testnet ? "https://v2-testnet.oswap.io/#/add-liquidity/" : "https://v2.oswap.io/#/add-liquidity/";
+exports.oswap_main_url = process.env.testnet ? "https://v2-testnet.oswap.io" : "https://v2.oswap.io";
 exports.wallet_uri = process.env.testnet ? "obyte-tn" : "obyte";
 
 exports.eligiblePools = process.env.testnet ?
@@ -27,7 +27,7 @@ exports.eligiblePools = process.env.testnet ?
 	}
 	:
 	{
-		AR3SHS7SFH3PF6ZM6UIF7HWIV44TZ46H: { coeff: 0 }, // IUSD-OUSD
+/*		AR3SHS7SFH3PF6ZM6UIF7HWIV44TZ46H: { coeff: 0 }, // IUSD-OUSD
 		O4PXOZZ655Q53PDYLKW3GYN22U4RKO5R: { coeff: 0 }, // IBIT-OBIT
 		YGOUPTI7UXYPNUNWW3SSD4H7SWN5D6SN: { coeff: 0 }, // IAU-OAU
 		L553WBVMGVOGK2CFPHDF4XJR74JBYHQG: { coeff: 0 }, // IGB-OGB
@@ -54,4 +54,11 @@ exports.eligiblePools = process.env.testnet ?
 		'2VGKYBKUY6ZW5L43N33VUNXRA7DB5TUI': { coeff: 3 }, // GBYTE-ETH
 		'7U5P7LJWDWN2JMXEL2OCUJF43SXTWFXQ': { coeff: 3 }, // OBITV2-WBTC
 		'KF56ZXXS5LPFOXPMZTJA5RVLQ3OSGTRG': { coeff: 3 }, // GBYTE-WBTC
+*/
+		'ELRBOANJWTDZC5JUPPZRJ7BP72ZGVLMT': { coeff: 1 }, // GBYTE-USDC
+		'WOBHOLPRVZURRHP7V6NGQBSVEQGA5C54': { coeff: 1 }, // GBYTE-WBTC
+		'4NN3GFY42GSNKYOETG7HAQISULOLNYKK': { coeff: 1 }, // GBYTE-ETH
+		'WAON4KBBVHE6F2ZHKGON2KP3G7CJ27XA': { coeff: 1 }, // OUSD-USDC
+		'LEECDEWCDQHGSMCJCTGY3SD5T3R4IZ65': { coeff: 1 }, // OBIT-WBTC
+		'3HE3AWRWIQDVXR5RSRXQKNMPT4INCHFR': { coeff: 1 }, // OETH-ETH
 	};
