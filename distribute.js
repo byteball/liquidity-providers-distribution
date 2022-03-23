@@ -267,8 +267,8 @@ async function determinePoolAssetsValues(){
 
 			const pool_asset = eligiblePoolsByAddress[pool_address].pool_asset;
 			const pool_asset_price = getAssetGbPrice(pool_asset);
-			if (!pool_asset_price)
-				throw Error("no gb price for asset " + pool_asset);
+		//	if (!pool_asset_price)
+		//		throw Error("no gb price for asset " + pool_asset);
 
 			poolAssetPrices[pool_asset] =  {
 				price: pool_asset_price,
