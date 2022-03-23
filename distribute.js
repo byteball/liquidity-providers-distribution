@@ -236,6 +236,14 @@ async function discoverPoolAssets(){
 			infoByPoolAsset[pool_asset] = await getAssetInfo(pool_asset);
 		}		
 	}
+
+	// get info about buggy v2 pool assets for displaying old distributions
+	const buggyV2FactoryVars = await dag.readAAStateVars(conf.oswap_buggy_v2_factory, "pool_");
+	for (let var_name in buggyV2FactoryVars) {
+		const [prefix, pool_address] = var_name.split('_');
+		const { pool_asset } = buggyV2FactoryVars[var_name];
+		infoByPoolAsset[pool_asset] = await getAssetInfo(pool_asset);
+	}
 }
 
 async function getAssetInfo(asset){
