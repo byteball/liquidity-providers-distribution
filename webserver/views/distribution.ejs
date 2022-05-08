@@ -64,10 +64,10 @@
 				<p>Every <%= conf.hoursBetweenDistributions / 24 %> days, <%= formatters.baseAmount(conf.distribution_amount, 0) %> is distributed to liquidity providers on <%- formatters.url(conf.oswap_main_url) %>.</p>
 				<p>To participate:</p>
 				<ol>
-					<li>issue stable tokens on the Bonded Stablecoins website <a href="https://ostable.org<%= ref ? '/?r='+ref : '' %>" target="_blank" rel="noopener">ostable.org</a> or import tokens from Ethereum through <a href="https://counterstake.org" target="_blank" rel="noopener">Counterstake bridge</a>;</li>
+					<li>import tokens (ETH, USDC, WBTC) from Ethereum through <a href="https://counterstake.org" target="_blank" rel="noopener">Counterstake bridge</a> or issue stable tokens (OUSD, OBIT, OETH) on the Bonded Stablecoins website <a href="https://ostable.org<%= ref ? '/?r='+ref : '' %>" target="_blank" rel="noopener">ostable.org</a>;</li>
 					<li>use these tokens to provide liquidity on <%- formatters.url(conf.oswap_main_url) %> and get liquidity provider tokens in exchange (use direct links to the eligible liquidity pools below);</li>
 					<li>send the tokens of the eligible liquidity pools to this Autonomous Agent: <%-formatters.explorer(conf.assets_locker_aa) %> 
-					(<a href="<%=conf.wallet_uri +':'+conf.assets_locker_aa%>?single_address=1">send tokens</a>) that will lock the tokens for <%=conf.lock_period_in_days%> days.</li>
+					(<a href="<%=conf.wallet_uri +':'+conf.assets_locker_aa%>?single_address=1">click here to send tokens</a>) that will lock the tokens for <%=conf.lock_period_in_days%> days.</li>
 				</ol>
 				<p>The <%= formatters.baseAmount(conf.distribution_amount, 0) %> is distributed among the liquidity providers in proportion to the value locked adjusted by the weights indicated below.</p>
 			</div>
