@@ -72,8 +72,9 @@ function start(infoByPoolAsset, eligiblePoolsByAddress, poolAssetPrices){
 
 			const sum = apyPercent / value;
 			const preApy = (1 + sum) ** (365.25 / (conf.hoursBetweenDistributions / 24)) - 1;
-			const apy = Number((preApy * 100).toFixed(2)) || 0
-			result[key] = `${apy}%`;
+			const apy = Number((preApy * 100).toFixed(2)) || 0;
+
+			result[key] = apy;
 		}
 
 		return res.status(200).send(result);
