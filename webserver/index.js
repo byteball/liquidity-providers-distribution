@@ -26,56 +26,37 @@ function start(infoByPoolAsset, eligiblePoolsByAddress, poolAssetPrices){
 		const distributionsRows = await db.query("SELECT id,is_completed,snapshot_time,datetime,assets_total_value,assets_total_weighted_value \n\
 		FROM distributions ORDER BY id ASC");
 
-		const rewardsRows = await db.query("SELECT payout_address, payment_unit, distribution_share,reward_amount, GROUP_CONCAT(reward_details) AS reward_details \n\
-		FROM (SELECT reward_id,rewards.reward_amount,distribution_share,payment_unit,\n\
-		payout_address,asset||'@'||asset_amount||'@'||asset_value||'@'||asset_weighted_value||'@'||per_asset_rewards.reward_amount AS reward_details \n\
-		FROM per_asset_rewards INNER JOIN rewards ON rewards.id=per_asset_rewards.reward_id \n\
-		WHERE per_asset_rewards.distribution_id=?) GROUP BY reward_id;", [distributionsRows.length]);
+		let rewardsRows = await db.query("SELECT asset, SUM(asset_value) AS total_asset_value, SUM(asset_weighted_value) AS total_asset_weighted_value, \n\
+			SUM(per_asset_rewards.reward_amount) as total_asset_reward \n\
+			FROM per_asset_rewards INNER JOIN rewards ON rewards.id=per_asset_rewards.reward_id \n\
+			WHERE per_asset_rewards.distribution_id=? GROUP BY asset", [distributionsRows.length]);
 
-		const sumWeightedValueByAssetSymbol = {};
-		const sumValueByAssetSymbol = {};
-		let sumWeightedValue = 0;
-		let sumReward = 0;
-		for(const k in rewardsRows) {
-			const details = rewardsRows[k].reward_details.split(',');
-
-			for(const j in details) {				
-				const details_columns = details[j].split("@");
-				const assetUnit = details_columns[0];
-				const assetSymbol = infoByPoolAsset[assetUnit].symbol.slice(2);
-				
-				if(!sumValueByAssetSymbol[assetSymbol]) {
-					sumValueByAssetSymbol[assetSymbol] = 0;
-				}
-				const value = parseFloat(details_columns[2]);
-				sumValueByAssetSymbol[assetSymbol] += value;
-				
-				
-				if(!sumWeightedValueByAssetSymbol[assetSymbol]) {
-					sumWeightedValueByAssetSymbol[assetSymbol] = 0;
-				}
-				const weightedValue = parseFloat(details_columns[3]);
-				sumWeightedValueByAssetSymbol[assetSymbol] += weightedValue;
-				sumWeightedValue += weightedValue;
-				
-				const reward = parseInt(details_columns[4]) / 1e9;
-				sumReward += reward;
+		let totalWeightedValue = 0;
+		let totalReward = 0;
+		rewardsRows = rewardsRows.map(row => {
+			totalWeightedValue += row.total_asset_weighted_value;
+			totalReward += parseInt(row.total_asset_reward) / 1e9;
+			
+			return {
+				asset: infoByPoolAsset[row.asset].symbol.slice(2),
+				value: row.total_asset_value,
+				weightedValue: row.total_asset_weighted_value,
 			}
-		}
-		
+		})
+
 		const result = {};
-		for(let key in sumWeightedValueByAssetSymbol) {
-			const weightedValue = sumWeightedValueByAssetSymbol[key];
-			const value = sumValueByAssetSymbol[key];
+		rewardsRows.forEach(row => {
+				const assetWeightedValue = row.weightedValue;
+				const assetValue = row.value;
 
-			const apyPercent = ((weightedValue / sumWeightedValue) * sumReward);
+				const poolReward = ((assetWeightedValue / totalWeightedValue) * totalReward);
 
-			const sum = apyPercent / value;
-			const preApy = (1 + sum) ** (365.25 / (conf.hoursBetweenDistributions / 24)) - 1;
-			const apy = Number((preApy * 100).toFixed(2)) || 0;
+				const profit7d = poolReward / assetValue;
+				const preApy = (1 + profit7d) ** (365.25 / (conf.hoursBetweenDistributions / 24)) - 1;
+				const apy = Number((preApy * 100).toFixed(2)) || 0;
 
-			result[key] = apy;
-		}
+				result[row.asset] = apy;
+		})
 
 		return res.status(200).send(result);
 	});
