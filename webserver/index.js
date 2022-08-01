@@ -23,13 +23,12 @@ function start(infoByPoolAsset, eligiblePoolsByAddress, poolAssetPrices){
 		next();
 	})
 	app.get('/mining-apy', async (req,res) => {
-		const distributionsRows = await db.query("SELECT id,is_completed,snapshot_time,datetime,assets_total_value,assets_total_weighted_value \n\
-		FROM distributions ORDER BY id ASC");
+		const lastDistributionId = await db.query("SELECT id FROM distributions ORDER BY id DESC LIMIT 1");
 
 		let rewardsRows = await db.query("SELECT asset, SUM(asset_value) AS total_asset_value, SUM(asset_weighted_value) AS total_asset_weighted_value, \n\
 			SUM(per_asset_rewards.reward_amount) as total_asset_reward \n\
 			FROM per_asset_rewards INNER JOIN rewards ON rewards.id=per_asset_rewards.reward_id \n\
-			WHERE per_asset_rewards.distribution_id=? GROUP BY asset", [distributionsRows.length]);
+			WHERE per_asset_rewards.distribution_id=? GROUP BY asset", [lastDistributionId[0].id]);
 
 		let totalWeightedValue = 0;
 		let totalReward = 0;
