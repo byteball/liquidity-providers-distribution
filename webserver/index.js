@@ -26,7 +26,7 @@ function start(infoByPoolAsset, eligiblePoolsByAddress, poolAssetPrices){
 		const [{ id: lastDistributionId }] = await db.query("SELECT id FROM distributions ORDER BY id DESC LIMIT 1");
 
 		let rewardsRows = await db.query("SELECT asset, SUM(asset_value) AS total_asset_value, SUM(asset_weighted_value) AS total_asset_weighted_value, \n\
-			SUM(reward_amount) AS total_asset_reward FROM per_asset_rewards GROUP BY asset", [lastDistributionId]);
+			SUM(reward_amount) AS total_asset_reward FROM per_asset_rewards WHERE distribution_id=? GROUP BY asset", [lastDistributionId]);
 
 		let totalWeightedValue = 0;
 		let totalReward = 0;
