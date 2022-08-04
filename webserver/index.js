@@ -17,6 +17,47 @@ function start(infoByPoolAsset, eligiblePoolsByAddress, poolAssetPrices){
 	app.set('view engine', 'ejs');
 	app.use(express.urlencoded({ extended: false }));
 
+	app.use((req, res, next) => {
+		res.setHeader('Access-Control-Allow-Origin', '*');
+
+		next();
+	})
+	app.get('/mining-apy', async (req,res) => {
+		const [{ id: lastDistributionId }] = await db.query("SELECT id FROM distributions ORDER BY id DESC LIMIT 1");
+
+		let rewardsRows = await db.query("SELECT asset, SUM(asset_value) AS total_asset_value, SUM(asset_weighted_value) AS total_asset_weighted_value, \n\
+			SUM(reward_amount) AS total_asset_reward FROM per_asset_rewards WHERE distribution_id=? GROUP BY asset", [lastDistributionId]);
+
+		let totalWeightedValue = 0;
+		let totalReward = 0;
+		rewardsRows = rewardsRows.map(row => {
+			totalWeightedValue += row.total_asset_weighted_value;
+			totalReward += parseInt(row.total_asset_reward) / 1e9;
+			
+			return {
+				asset: infoByPoolAsset[row.asset].symbol.slice(2),
+				value: row.total_asset_value,
+				weightedValue: row.total_asset_weighted_value,
+			}
+		})
+
+		const result = {};
+		rewardsRows.forEach(row => {
+				const assetWeightedValue = row.weightedValue;
+				const assetValue = row.value;
+
+				const poolReward = ((assetWeightedValue / totalWeightedValue) * totalReward);
+
+				const profit7d = poolReward / assetValue;
+				const preApy = (1 + profit7d) ** (365.25 / (conf.hoursBetweenDistributions / 24)) - 1;
+				const apy = Number((preApy * 100).toFixed(2)) || 0;
+
+				result[row.asset] = apy;
+		})
+
+		return res.status(200).send(result);
+	});
+
 	app.get('/', async (req, res) => {
 		if (validationUtils.isValidAddress(req.query.address)){
 			renderForAddress(res, req.query.address);
