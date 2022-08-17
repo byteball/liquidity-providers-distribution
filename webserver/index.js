@@ -8,7 +8,19 @@ const fetch = require('node-fetch');
 const moment = require('moment');
 const usdPrices = [];
 
+function generatePoolAddressesByPoolAsset(eligiblePoolsByAddress) {
+	const poolAddressesByPoolAsset = {};
+	
+	for (let address in eligiblePoolsByAddress) {
+		const { pool_asset } = eligiblePoolsByAddress[address];
+		poolAddressesByPoolAsset[`${pool_asset}`] = address;
+	}
+	
+	return poolAddressesByPoolAsset;
+}
+
 function start(infoByPoolAsset, eligiblePoolsByAddress, poolAssetPrices){
+	const poolAddressesByPoolAsset = generatePoolAddressesByPoolAsset(eligiblePoolsByAddress);
 
 	const app = express();
 	const server = require('http').Server(app);
@@ -35,7 +47,7 @@ function start(infoByPoolAsset, eligiblePoolsByAddress, poolAssetPrices){
 			totalReward += parseInt(row.total_asset_reward) / 1e9;
 			
 			return {
-				asset: infoByPoolAsset[row.asset].symbol.slice(2),
+				address: poolAddressesByPoolAsset[row.asset],
 				value: row.total_asset_value,
 				weightedValue: row.total_asset_weighted_value,
 			}
@@ -52,7 +64,7 @@ function start(infoByPoolAsset, eligiblePoolsByAddress, poolAssetPrices){
 				const preApy = (1 + profit7d) ** (365.25 / (conf.hoursBetweenDistributions / 24)) - 1;
 				const apy = Number((preApy * 100).toFixed(2)) || 0;
 
-				result[row.asset] = apy;
+				result[row.address] = apy;
 		})
 
 		return res.status(200).send(result);
@@ -122,7 +134,7 @@ function start(infoByPoolAsset, eligiblePoolsByAddress, poolAssetPrices){
 		});
 	}
 
-	async function renderForAddress(res, address){ 
+	async function renderForAddress(res, address){
 
 		const assocAmountVars = await dag.readAAStateVars(conf.assets_locker_aa, "amount_" + address);
 		const assocTsVars = await dag.readAAStateVars(conf.assets_locker_aa, "ts_" + address);
