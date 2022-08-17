@@ -10,7 +10,7 @@
 		"express": "^4.17.1",
 		"headless-obyte": "git+https://github.com/byteball/headless-obyte.git",
 		"node-fetch": "^2.6.1",
-		"moment": "2.29.0",
+		"moment": "^2.29.4",
 		"ocore": "git+https://github.com/byteball/ocore.git"
 	},
 	"resolutions": {
