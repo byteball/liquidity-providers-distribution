@@ -8,19 +8,19 @@ const fetch = require('node-fetch');
 const moment = require('moment');
 const usdPrices = [];
 
-function generatePoolAddressesBySymbol(eligiblePoolsByAddress) {
-	const poolAddressesBySymbol = {};
+function generatePoolAddressesByPoolAsset(eligiblePoolsByAddress) {
+	const poolAddressesByPoolAsset = {};
 	
 	for (let address in eligiblePoolsByAddress) {
-		const {x_asset_info, y_asset_info} = eligiblePoolsByAddress[address];
-		poolAddressesBySymbol[`${x_asset_info.symbol}-${y_asset_info.symbol}`] = address;
+		const { pool_asset } = eligiblePoolsByAddress[address];
+		poolAddressesByPoolAsset[`${pool_asset}`] = address;
 	}
 	
-	return poolAddressesBySymbol;
+	return poolAddressesByPoolAsset;
 }
 
 function start(infoByPoolAsset, eligiblePoolsByAddress, poolAssetPrices){
-	const poolAddressesBySymbol = generatePoolAddressesBySymbol(eligiblePoolsByAddress);
+	const poolAddressesByPoolAsset = generatePoolAddressesByPoolAsset(eligiblePoolsByAddress);
 
 	const app = express();
 	const server = require('http').Server(app);
@@ -46,9 +46,8 @@ function start(infoByPoolAsset, eligiblePoolsByAddress, poolAssetPrices){
 			totalWeightedValue += row.total_asset_weighted_value;
 			totalReward += parseInt(row.total_asset_reward) / 1e9;
 			
-			const symbol = infoByPoolAsset[row.asset].symbol.slice(2);
 			return {
-				address: poolAddressesBySymbol[symbol],
+				address: poolAddressesByPoolAsset[row.asset],
 				value: row.total_asset_value,
 				weightedValue: row.total_asset_weighted_value,
 			}
