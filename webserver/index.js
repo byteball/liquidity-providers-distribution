@@ -145,9 +145,9 @@ function start(infoByPoolAsset, eligiblePoolsByAddress, poolAssetPrices){
 		for (var key in assocAmountVars){
 			const amount = assocAmountVars[key];
 			const asset = key.split('_')[2];
-			const timestamp = assocTsVars[ "ts_" + address + "_" + asset] + conf.lock_period_in_days * 24 * 3600;
+			const timestamp = (assocTsVars[ "ts_" + address + "_" + asset] + conf.lock_period_in_days * 24 * 3600) || 0;
 			const to = moment().to(moment.unix(timestamp));
-			const bUnlockable = moment.unix(timestamp).isBefore();
+			const bUnlockable = moment.unix(timestamp).isBefore() && amount;
 			balances.push({amount, asset, to, bUnlockable} )
 		}
 		res.render('address.ejs', {
