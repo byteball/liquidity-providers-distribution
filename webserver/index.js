@@ -176,10 +176,10 @@ function start(infoByPoolAsset, eligiblePoolsByAddress, poolAssetPrices){
 		baseAmount: (amount, decimals) => parseFloat((parseInt(amount) / 1e9).toFixed(typeof decimals == "number" ? decimals : 6)) + " GB",
 		assetSymbol: asset => infoByPoolAsset[asset].symbol,
 		share: amount => parseFloat((amount * 100).toPrecision(3))+"%",
-		unit: unit => unit ? '<a href="'+conf.explorer_base_url+ "/#" + unit +'" target="_blank">'+unit.slice(0,8)+'...</a>' : '',
+		unit: unit => unit ? '<a href="'+conf.explorer_base_url+ "/" + unit +'" target="_blank">'+unit.slice(0,8)+'...</a>' : '',
 		address: address => '<a class="address" href="/?address=' + address +'" target="_blank">'+address+'</a>',
 		url: url => '<a href="'+ url +'" target="_blank">'+url.replace(/^https?:\/\//, '')+'</a>',
-		explorer: (addressOrUnit, name) => addressOrUnit ? '<a class="address" href="'+conf.explorer_base_url+ "/#" + addressOrUnit +'" target="_blank">'+ (name ? name : addressOrUnit)+'</a>' : '',
+		explorer: (addressOrUnit, name) => addressOrUnit ? '<a class="address" href="'+conf.explorer_base_url+(addressOrUnit.length === 32 ? "/address/" : "/") + addressOrUnit +'" target="_blank">'+ (name ? name : addressOrUnit)+'</a>' : '',
 	}
 
 	function btoa(str) {
