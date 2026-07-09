@@ -244,6 +244,16 @@ async function discoverPoolAssets(){
 		const { pool_asset } = buggyV2FactoryVars[var_name];
 		infoByPoolAsset[pool_asset] = await getAssetInfo(pool_asset);
 	}
+
+	const historicalAssets = await db.query("SELECT DISTINCT asset FROM per_asset_rewards WHERE asset IS NOT NULL");
+	for (const { asset } of historicalAssets) {
+		if (infoByPoolAsset[asset])
+			continue;
+
+		const info = await getAssetInfo(asset);
+		if (info.symbol)
+			infoByPoolAsset[asset] = info;
+	}
 }
 
 async function getAssetInfo(asset){
